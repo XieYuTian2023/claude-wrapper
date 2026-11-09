@@ -1,0 +1,218 @@
+//! Bounded local event log. Only structured, non-secret diagnostics are stored.
+use std::{
+    fs::{self, File, OpenOptions},
+    io::{ErrorKind, Read, Write},
+    net::IpAddr,
+    os::unix::fs::{MetadataExt, OpenOptionsExt},
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
+
+use anyhow::{Context, Result, ensure};
+use serde::{Deserialize, Serialize};
+use tempfile::NamedTempFile;
+
+use crate::proxy::{ExitIpError, UnexpectedExitCountry};
+
+const LIMIT: usize = 100;
+const MAX_BYTES: u64 = 64 * 1024;
+const FILE: &str = ".wrapper-events.json";
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Category {
+    Block,
+    Error,
+    Exit,
+}
+
+impl Category {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Block => "拦截",
+            Self::Error => "错误",
+            Self::Exit => "出口",
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub enum Event {
+    CountryBlocked { observed: String, expected: String },
+    IpBlocked { observed: IpAddr, expected: IpAddr },
+    UnstableIp { first: IpAddr, observed: IpAddr },
+    CredentialBlocked,
+    ApiUnavailable,
+    ProbeFailed,
+    ClientExit(i32),
+    OperationFailed,
+    Pinned(IpAddr),
+    ResetPin,
+}
+
+impl Event {
+    pub fn category(&self) -> Category {
+        match self {
+            Self::CountryBlocked { .. }
+            | Self::IpBlocked { .. }
+            | Self::UnstableIp { .. }
+            | Self::CredentialBlocked => Category::Block,
+            Self::Pinned(_) | Self::ResetPin => Category::Exit,
+            _ => Category::Error,
+        }
+    }
+
+    pub fn summary(&self) -> String {
+        match self {
+            Self::CountryBlocked { observed, .. } if observed == "CN" => {
+                "地区 · 检测到中国大陆出口（CN）".into()
+            }
+            Self::CountryBlocked { observed, expected } => {
+                format!("地区 · 预期 {expected}，观察到 {observed}")
+            }
+            Self::IpBlocked { observed, expected } => {
+                format!("IP · 预期 {expected}，观察到 {observed}")
+            }
+            Self::UnstableIp { first, observed } => {
+                format!("自动固定 · 首次 {first}，随后 {observed}")
+            }
+            Self::CredentialBlocked => "鉴权 · 订阅 OAuth 与自定义 API 冲突".into(),
+            Self::ApiUnavailable => "网络 · Claude API HTTPS 预检失败".into(),
+            Self::ProbeFailed => "网络 · 出口探测失败".into(),
+            Self::ClientExit(code) => format!("客户端退出 · 状态 {code}"),
+            Self::OperationFailed => "操作失败 · 详情见当次终端输出".into(),
+            Self::Pinned(ip) => format!("自动固定 · 已锁定 {ip}"),
+            Self::ResetPin => "自动固定 · 已清除，等待重新探测".into(),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Record {
+    pub unix_time: u64,
+    pub profile: Option<String>,
+    pub operation: String,
+    pub event: Event,
+}
+
+pub fn read(dir: &Path) -> Result<Vec<Record>> {
+    let file = match OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+        .open(dir.join(FILE))
+    {
+        Ok(file) => file,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(error).context("could not read Wrapper log"),
+    };
+    let metadata = owned_file(&file)?;
+    ensure!(
+        metadata.len() <= MAX_BYTES,
+        "Wrapper log exceeds size limit"
+    );
+    serde_json::from_reader(file.take(MAX_BYTES)).context("invalid Wrapper log")
+}
+
+fn owned_file(file: &File) -> Result<fs::Metadata> {
+    let metadata = file.metadata()?;
+    ensure!(
+        metadata.is_file() && metadata.nlink() == 1 && metadata.uid() == unsafe { libc::geteuid() },
+        "Wrapper log requires owned regular files"
+    );
+    Ok(metadata)
+}
+
+fn append(dir: &Path, profile: Option<&str>, operation: &str, event: Event) -> Result<()> {
+    fs::create_dir_all(dir)?;
+    let lock = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .mode(0o600)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+        .open(dir.join(".wrapper-events.lock"))?;
+    owned_file(&lock)?;
+    lock.lock()?;
+    let mut records = read(dir)?;
+    if records.len() >= LIMIT {
+        records.drain(..=records.len() - LIMIT);
+    }
+    records.push(Record {
+        unix_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
+        profile: profile
+            .filter(|name| crate::profile::valid_name(name))
+            .map(str::to_owned),
+        operation: operation.into(),
+        event,
+    });
+    let mut temporary = NamedTempFile::new_in(dir)?;
+    serde_json::to_writer(&mut temporary, &records)?;
+    temporary.write_all(b"\n")?;
+    temporary
+        .persist(dir.join(FILE))
+        .map_err(|error| error.error)?;
+    Ok(())
+}
+
+pub fn record(dir: &Path, profile: Option<&str>, operation: &str, event: Event) {
+    if append(dir, profile, operation, event).is_err() {
+        eprintln!("claude-wrapper: could not write local event log");
+    }
+}
+
+pub fn failure(dir: &Path, profile: Option<&str>, operation: &str, error: &anyhow::Error) {
+    let event = if let Some(country) = error.downcast_ref::<UnexpectedExitCountry>() {
+        Event::CountryBlocked {
+            observed: country.observed.clone(),
+            expected: country.expected.clone(),
+        }
+    } else if let Some(ip) = error.downcast_ref::<ExitIpError>() {
+        match *ip {
+            ExitIpError::Mismatch { observed, expected } => Event::IpBlocked { observed, expected },
+            ExitIpError::Unstable { first, observed } => Event::UnstableIp { first, observed },
+        }
+    } else {
+        let chain = format!("{error:#}");
+        if chain.contains("explicit Claude subscription OAuth credential") {
+            Event::CredentialBlocked
+        } else if chain.contains("Claude API HTTPS probe failed") {
+            Event::ApiUnavailable
+        } else if chain.contains("probe") || chain.contains("VPN preflight failed") {
+            Event::ProbeFailed
+        } else {
+            Event::OperationFailed
+        }
+    };
+    record(dir, profile, operation, event);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn records_policy_blocks_without_persisting_untrusted_error_text() {
+        let root = tempfile::tempdir().unwrap();
+        let error = anyhow::Error::new(ExitIpError::Mismatch {
+            observed: "203.0.113.10".parse().unwrap(),
+            expected: "203.0.113.11".parse().unwrap(),
+        })
+        .context("untrusted context with sensitive-value");
+        failure(root.path(), Some("lab"), "run", &error);
+        failure(
+            root.path(),
+            Some("../sensitive-value"),
+            "doctor",
+            &anyhow::anyhow!("sensitive-value"),
+        );
+        let records = read(root.path()).unwrap();
+        assert!(matches!(records[0].event, Event::IpBlocked { .. }));
+        assert!(matches!(records[1].event, Event::OperationFailed));
+        assert!(records[1].profile.is_none());
+        assert!(
+            !fs::read_to_string(root.path().join(FILE))
+                .unwrap()
+                .contains("sensitive-value")
+        );
+    }
+}

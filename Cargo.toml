@@ -1,0 +1,32 @@
+[package]
+name = "claude-wrapper"
+version = "0.3.1"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+reqwest = { version = "0.12", default-features = false, features = ["native-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+tokio = { version = "1", features = ["rt", "time"] }
+toml = "0.9"
+which = "8"
+ratatui = { version = "0.30.2", default-features = false, features = ["crossterm"] }
+crossterm = "0.29"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+base64 = "0.22"
+getrandom = "0.4"
+http = "1"
+http-body-util = "0.1"
+httparse = "1"
+hyper = { version = "1", features = ["http1", "client", "server"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+libc = "0.2"
+native-tls = "0.2"
+percent-encoding = "2"
+socket2 = { version = "0.6", features = ["all"] }
+tokio = { version = "1", features = ["io-util", "macros", "net", "process", "signal", "sync"] }
+tokio-native-tls = "0.3"

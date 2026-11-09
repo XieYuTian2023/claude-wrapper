@@ -1,0 +1,6 @@
+/target/
+/dist/
+**/build/
+.DS_Store
+__pycache__/
+/reports/2026-11-08-cleanup.json

@@ -1,0 +1,64 @@
+#!/bin/sh
+# npm distributes this package; it is not a resident Node.js wrapper.
+set -eu
+
+cw_fail() {
+    printf '%s\n' "claude-wrapper: $1" >&2
+    exit 1
+}
+
+cw_lf='
+'
+cw_cr=$(printf '\r')
+cw_check_path() {
+    case "$1" in
+        *"$cw_lf"*|*"$cw_cr"*) cw_fail 'carriage returns and newlines are not supported in installation paths' ;;
+    esac
+}
+
+cw_source=$0
+# Both npm bin names use this launcher. Preserve the invoked name before
+# resolving its symlink so the short command can forward Claude arguments.
+case "${cw_source##*/}" in
+    cw) set -- start -- "$@" ;;
+esac
+cw_check_path "$cw_source"
+case "$cw_source" in
+    /*) ;;
+    */*) cw_source=$PWD/$cw_source ;;
+    *) cw_source=$(command -v "$cw_source") || cw_fail 'could not locate the launcher' ;;
+esac
+cw_links=0
+while [ -L "$cw_source" ]; do
+    cw_links=$((cw_links + 1))
+    [ "$cw_links" -le 40 ] || cw_fail 'launcher symbolic-link chain is too long'
+    cw_parent=${cw_source%/*}
+    [ -n "$cw_parent" ] || cw_parent=/
+    cw_parent=$(CDPATH= cd -P "$cw_parent" && printf '%s.' "$PWD") || cw_fail 'could not resolve launcher directory'
+    cw_parent=${cw_parent%.}
+    cw_check_path "$cw_parent"
+    # Preserve trailing newlines long enough to reject them instead of selecting
+    # a different similarly named directory after command substitution.
+    cw_link=$(/usr/bin/readlink "$cw_source" && printf '.') || cw_fail 'could not read launcher symbolic link'
+    cw_link=${cw_link%.}
+    cw_link=${cw_link%?}
+    cw_check_path "$cw_link"
+    case "$cw_link" in
+        /*) cw_source=$cw_link ;;
+        *) cw_source=$cw_parent/$cw_link ;;
+    esac
+done
+cw_parent=${cw_source%/*}
+[ -n "$cw_parent" ] || cw_parent=/
+cw_package=$(CDPATH= cd -P "$cw_parent/.." && printf '%s.' "$PWD") || cw_fail 'could not locate package directory'
+cw_package=${cw_package%.}
+cw_check_path "$cw_package"
+[ "$(/usr/bin/uname -s)" = Darwin ] || cw_fail 'this package supports macOS only'
+case "$(/usr/bin/uname -m)" in
+    x86_64) cw_arch=x64 ;;
+    arm64) cw_arch=arm64 ;;
+    *) cw_fail 'this Mac architecture is not supported' ;;
+esac
+cw_runtime=$cw_package/native/darwin-$cw_arch
+[ -x "$cw_runtime/claude-wrapper" ] || cw_fail 'native executable is missing; reinstall the complete package'
+exec "$cw_runtime/claude-wrapper" "$@"

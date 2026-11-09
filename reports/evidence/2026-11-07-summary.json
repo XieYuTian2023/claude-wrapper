@@ -1,0 +1,2040 @@
+{
+  "platform": "Intel macOS",
+  "date": "2026-11-07",
+  "suite": [
+    {
+      "name": "old-neither",
+      "exit": 0,
+      "seconds": 3.1418404119999996,
+      "capture_sha256": "4d0b885315fa6de6c7e6a45643c587392669c275de349919c02fbc744d9be0ba",
+      "requests": {
+        "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+        "/api/claude_cli/bootstrap": 1,
+        "/api/claude_code_penguin_mode": 1,
+        "/mcp-registry/v0/servers": 1,
+        "/v1/messages": 2,
+        "/api/claude_code/organizations/metrics_enabled": 1,
+        "/api/event_logging/v2/batch": 1
+      },
+      "model_requests": 2,
+      "device_ids": [
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "date_lines": [
+        "Today's date is 2026/11/07."
+      ],
+      "date_codepoints": {
+        "Today's date is 2026/11/07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+0027",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002F",
+          "U+0031",
+          "U+0031",
+          "U+002F",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 183,
+      "identity_field_paths": [
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+        "/api/event_logging/v2/batch.events[].event_data.device_id",
+        "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.env.arch",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+        "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "old-known",
+      "exit": 0,
+      "seconds": 3.473070613,
+      "capture_sha256": "3ec216ca17d7c37a0d34d4faaa052717885fd2c85acd507d2493bcf0f63f4a43",
+      "requests": {
+        "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+        "/api/claude_cli/bootstrap": 1,
+        "/api/claude_code_penguin_mode": 1,
+        "/mcp-registry/v0/servers": 1,
+        "/v1/messages": 2,
+        "/api/claude_code/organizations/metrics_enabled": 1,
+        "/api/event_logging/v2/batch": 1
+      },
+      "model_requests": 2,
+      "device_ids": [
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "date_lines": [
+        "Today’s date is 2026/11/07."
+      ],
+      "date_codepoints": {
+        "Today’s date is 2026/11/07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+2019",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002F",
+          "U+0031",
+          "U+0031",
+          "U+002F",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 181,
+      "identity_field_paths": [
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+        "/api/event_logging/v2/batch.events[].event_data.device_id",
+        "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.env.arch",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+        "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "old-keyword",
+      "exit": 0,
+      "seconds": 3.490103603,
+      "capture_sha256": "0f657ad9cff7de796c8fa701cd990a67f9baf7c791670ab3d51a6120309e2cdc",
+      "requests": {
+        "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+        "/api/claude_cli/bootstrap": 1,
+        "/api/claude_code_penguin_mode": 1,
+        "/mcp-registry/v0/servers": 1,
+        "/v1/messages": 2,
+        "/api/claude_code/organizations/metrics_enabled": 1,
+        "/api/event_logging/v2/batch": 1
+      },
+      "model_requests": 2,
+      "device_ids": [
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "date_lines": [
+        "Todayʼs date is 2026/11/07."
+      ],
+      "date_codepoints": {
+        "Todayʼs date is 2026/11/07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+02BC",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002F",
+          "U+0031",
+          "U+0031",
+          "U+002F",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 187,
+      "identity_field_paths": [
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+        "/api/event_logging/v2/batch.events[].event_data.device_id",
+        "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.env.arch",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+        "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "old-both",
+      "exit": 0,
+      "seconds": 1.420951788,
+      "capture_sha256": "050d23e496d403a77cd92574ab2c2314253651401a228ee3d00563b5325f42d4",
+      "requests": {
+        "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+        "/api/claude_cli/bootstrap": 1,
+        "/api/claude_code_penguin_mode": 1,
+        "/mcp-registry/v0/servers": 1,
+        "/v1/messages": 2,
+        "/api/claude_code/organizations/metrics_enabled": 1,
+        "/api/event_logging/v2/batch": 1
+      },
+      "model_requests": 2,
+      "device_ids": [
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "date_lines": [
+        "Todayʹs date is 2026/11/07."
+      ],
+      "date_codepoints": {
+        "Todayʹs date is 2026/11/07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+02B9",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002F",
+          "U+0031",
+          "U+0031",
+          "U+002F",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 187,
+      "identity_field_paths": [
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+        "/api/event_logging/v2/batch.events[].event_data.device_id",
+        "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.env.arch",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+        "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "old-us",
+      "exit": 0,
+      "seconds": 1.491558517,
+      "capture_sha256": "41277fef2c47819655435a6eb02eadc01a348e8d06214fdc1cd4307bb964e3ae",
+      "requests": {
+        "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+        "/api/claude_cli/bootstrap": 1,
+        "/api/claude_code_penguin_mode": 1,
+        "/mcp-registry/v0/servers": 1,
+        "/v1/messages": 2,
+        "/api/claude_code/organizations/metrics_enabled": 1,
+        "/api/event_logging/v2/batch": 1
+      },
+      "model_requests": 2,
+      "device_ids": [
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "date_lines": [
+        "Today's date is 2026-11-07."
+      ],
+      "date_codepoints": {
+        "Today's date is 2026-11-07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+0027",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002D",
+          "U+0031",
+          "U+0031",
+          "U+002D",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 179,
+      "identity_field_paths": [
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+        "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+        "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+        "/api/event_logging/v2/batch.events[].event_data.device_id",
+        "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+        "/api/event_logging/v2/batch.events[].event_data.env.arch",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform",
+        "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+        "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "old-wrapped",
+      "exit": 0,
+      "seconds": 4.079084776,
+      "capture_sha256": "f34daf97754a0b208bcdf7d8d3e2135987040414764647ceee5f2b95cb65768c",
+      "requests": {
+        "/v1/messages": 1
+      },
+      "model_requests": 1,
+      "device_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "date_lines": [
+        "Today's date is 2026-11-07."
+      ],
+      "date_codepoints": {
+        "Today's date is 2026-11-07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+0027",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002D",
+          "U+0031",
+          "U+0031",
+          "U+002D",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 1,
+      "identity_field_paths": [
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "old-reject-tz",
+      "exit": 126,
+      "seconds": 9.203588132999998,
+      "capture_sha256": "be89acf950240a96d9cb3d9fa018f9eb49d6a8af38527d7508d841777a3f9921",
+      "requests": {
+        "/api/claude_code/policy_limits": 4,
+        "/api/claude_code/settings": 1
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "old-reject-hostname",
+      "exit": 126,
+      "seconds": 9.472654047,
+      "capture_sha256": "be89acf950240a96d9cb3d9fa018f9eb49d6a8af38527d7508d841777a3f9921",
+      "requests": {
+        "/api/claude_code/policy_limits": 4,
+        "/api/claude_code/settings": 1
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "old-reject-lc_all",
+      "exit": 126,
+      "seconds": 8.113903332,
+      "capture_sha256": "be89acf950240a96d9cb3d9fa018f9eb49d6a8af38527d7508d841777a3f9921",
+      "requests": {
+        "/api/claude_code/policy_limits": 4,
+        "/api/claude_code/settings": 1
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "old-reject-no_proxy",
+      "exit": 126,
+      "seconds": 8.187550197999999,
+      "capture_sha256": "be89acf950240a96d9cb3d9fa018f9eb49d6a8af38527d7508d841777a3f9921",
+      "requests": {
+        "/api/claude_code/policy_limits": 4,
+        "/api/claude_code/settings": 1
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "old-reject-anthropic_base_url",
+      "exit": 126,
+      "seconds": 9.068382265999999,
+      "capture_sha256": "be89acf950240a96d9cb3d9fa018f9eb49d6a8af38527d7508d841777a3f9921",
+      "requests": {
+        "/api/claude_code/policy_limits": 4,
+        "/api/claude_code/settings": 1
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "old-reject-claude_config_dir",
+      "exit": 126,
+      "seconds": 8.3863799,
+      "capture_sha256": "53d4ddc55cdf302f43c1a22da3687cb6e751e47a2f697e81af895d13da9d4096",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "old-reject-disable_telemetry",
+      "exit": 126,
+      "seconds": 2.692285859,
+      "capture_sha256": "c4e3e0d2690d89a18642693d1d0526e8b63525a88806ecf51f1e83a37b4f67b7",
+      "requests": {},
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-wrapped",
+      "exit": 0,
+      "seconds": 3.590309637,
+      "capture_sha256": "1333794b8b634ac7f6bbaeb2057163213790afd9783a872462443195f930f145",
+      "requests": {
+        "/v1/messages": 1
+      },
+      "model_requests": 1,
+      "device_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "date_lines": [
+        "Today's date is 2026-11-07."
+      ],
+      "date_codepoints": {
+        "Today's date is 2026-11-07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+0027",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002D",
+          "U+0031",
+          "U+0031",
+          "U+002D",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 1,
+      "identity_field_paths": [
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    },
+    {
+      "name": "current-reject-tz",
+      "exit": 126,
+      "seconds": 7.357014306,
+      "capture_sha256": "a524de5fd4bc4f0aead4470949072ce18f7cdec2a5d0ff1c54f31222693839a4",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-reject-hostname",
+      "exit": 126,
+      "seconds": 7.476928431,
+      "capture_sha256": "a524de5fd4bc4f0aead4470949072ce18f7cdec2a5d0ff1c54f31222693839a4",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-reject-lc_all",
+      "exit": 126,
+      "seconds": 8.536935957,
+      "capture_sha256": "a524de5fd4bc4f0aead4470949072ce18f7cdec2a5d0ff1c54f31222693839a4",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-reject-no_proxy",
+      "exit": 126,
+      "seconds": 9.746699569,
+      "capture_sha256": "a524de5fd4bc4f0aead4470949072ce18f7cdec2a5d0ff1c54f31222693839a4",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-reject-anthropic_base_url",
+      "exit": 126,
+      "seconds": 8.210683675,
+      "capture_sha256": "a524de5fd4bc4f0aead4470949072ce18f7cdec2a5d0ff1c54f31222693839a4",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-reject-claude_config_dir",
+      "exit": 0,
+      "seconds": 8.838264861999999,
+      "capture_sha256": "8afd24bcdeb892a0971642e6fab03170131c8841953fb35a391f9fe3a84fe5a0",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4,
+        "/v1/messages": 1
+      },
+      "model_requests": 1,
+      "device_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "date_lines": [
+        "Today's date is 2026-11-07."
+      ],
+      "date_codepoints": {
+        "Today's date is 2026-11-07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+0027",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002D",
+          "U+0031",
+          "U+0031",
+          "U+002D",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 1,
+      "identity_field_paths": [
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "client ignored setting; Profile identity preserved"
+    },
+    {
+      "name": "current-reject-disable_telemetry",
+      "exit": 126,
+      "seconds": 7.108047662,
+      "capture_sha256": "a524de5fd4bc4f0aead4470949072ce18f7cdec2a5d0ff1c54f31222693839a4",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 4
+      },
+      "model_requests": 0,
+      "device_ids": [],
+      "date_lines": [],
+      "date_codepoints": {},
+      "timezone_strings": [],
+      "decoded_json_fields": 0,
+      "identity_field_paths": [],
+      "unexpected_auth": 0,
+      "tls_errors": 0,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": "rejected before model request"
+    },
+    {
+      "name": "current-wrapped-interactive",
+      "exit": 0,
+      "seconds": 11.923382891,
+      "capture_sha256": "25abea170db2a6baa67af2f1f114596d978a679399d5f54f5c193fdaaf5d954d",
+      "requests": {
+        "/api/claude_code/settings": 1,
+        "/api/claude_code/policy_limits": 5,
+        "/v1/messages": 1,
+        "/claude-code-releases/plugins/claude-plugins-official/latest": 1,
+        "/claude-code-releases/plugins/claude-plugins-official/%7B%7D.zip": 1
+      },
+      "model_requests": 1,
+      "device_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "date_lines": [
+        "Today's date is 2026-11-07."
+      ],
+      "date_codepoints": {
+        "Today's date is 2026-11-07.": [
+          "U+0054",
+          "U+006F",
+          "U+0064",
+          "U+0061",
+          "U+0079",
+          "U+0027",
+          "U+0073",
+          "U+0020",
+          "U+0064",
+          "U+0061",
+          "U+0074",
+          "U+0065",
+          "U+0020",
+          "U+0069",
+          "U+0073",
+          "U+0020",
+          "U+0032",
+          "U+0030",
+          "U+0032",
+          "U+0036",
+          "U+002D",
+          "U+0031",
+          "U+0031",
+          "U+002D",
+          "U+0030",
+          "U+0037",
+          "U+002E"
+        ]
+      },
+      "timezone_strings": [],
+      "decoded_json_fields": 1,
+      "identity_field_paths": [
+        "/v1/messages.metadata.user_id[decoded].device_id"
+      ],
+      "unexpected_auth": 0,
+      "tls_errors": 1,
+      "passed": true,
+      "failures": [],
+      "setting_outcome": null
+    }
+  ],
+  "supplemental": {
+    "summary": [
+      {
+        "name": "wrapped-a-corrected",
+        "exit": 0,
+        "seconds": 11.152513198000001,
+        "capture_sha256": "75c1ab152ba0fec61e34dfa75d07e3ab6d8cbaffb51415e190db9368db7f1940",
+        "requests": {
+          "/api/claude_code/settings": 1,
+          "/api/claude_code/policy_limits": 4,
+          "/v1/messages": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "wrapped-a-repeat",
+        "exit": 0,
+        "seconds": 8.930526304,
+        "capture_sha256": "40cb7e4b35e0dbd20df916dfc74b999640fe025c49a2decdecdd68d9273c33ca",
+        "requests": {
+          "/api/claude_code/settings": 1,
+          "/api/claude_code/policy_limits": 4,
+          "/v1/messages": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "wrapped-b",
+        "exit": 0,
+        "seconds": 8.924622064000001,
+        "capture_sha256": "412467548455dbc0f74fc7068c822e0b16e44856379163d978949da128f675e0",
+        "requests": {
+          "/api/claude_code/settings": 1,
+          "/api/claude_code/policy_limits": 4,
+          "/v1/messages": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "old-shanghai-default",
+        "exit": 0,
+        "seconds": 9.212101439,
+        "capture_sha256": "6afd39f9eee494df8d127d440c902674d0fd26564bc0611df790a533c171c694",
+        "requests": {
+          "/api/claude_code/policy_limits": 4,
+          "/api/claude_code/settings": 1,
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 203,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "old-urumqi-custom",
+        "exit": 0,
+        "seconds": 2.4156774149999998,
+        "capture_sha256": "fa3352c589972122a68b14614f5455956da20640125de62b9a6b69788a7dc2d0",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today's date is 2026/11/07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026/11/07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002F",
+            "U+0031",
+            "U+0031",
+            "U+002F",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 185,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      }
+    ],
+    "date-regression-summary": [
+      {
+        "name": "old-la-custom",
+        "exit": 0,
+        "seconds": 1.425031894,
+        "capture_sha256": "b7ccd81259d362042827718da70df2dc32dd9800db5d423c4340c2d1f46b2dba",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 183,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "old-shanghai-custom",
+        "exit": 0,
+        "seconds": 1.403919175,
+        "capture_sha256": "c75993b114d4961335c1a1642051e39228701b88478c98d33593e34e392a3d35",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today's date is 2026/11/07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026/11/07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002F",
+            "U+0031",
+            "U+0031",
+            "U+002F",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 181,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "current-urumqi-anthropic-custom",
+        "exit": 0,
+        "seconds": 1.30006755,
+        "capture_sha256": "0eb238ae203bb319844db842842b4df34709152dcf2fc56ef8b7d84aded40c9c",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/v1/messages": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 235,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "wrapped-old-shanghai-custom",
+        "exit": 0,
+        "seconds": 5.383268111,
+        "capture_sha256": "4e97ccab92d8f7156f7ee525dc6c31447bcafd35a1b5494c974915c46d05c548",
+        "requests": {
+          "/v1/messages": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      }
+    ],
+    "apostrophe-summary": [
+      {
+        "name": "old-cn-host",
+        "exit": 0,
+        "seconds": 1.174723446,
+        "capture_sha256": "e9fa79a9160cba90f6a281a5c044b34cc2ad9f875bf452e3d866ea28e58dcb27",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Todayʼs date is 2026/11/07."
+        ],
+        "date_codepoints": {
+          "Todayʼs date is 2026/11/07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+02BC",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002F",
+            "U+0031",
+            "U+0031",
+            "U+002F",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 177,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "old-known-cn",
+        "exit": 0,
+        "seconds": 2.476937376,
+        "capture_sha256": "d1d79177495b66df75714f0e8904a62a0d3226f69fd0553f8ecd6700b15b4d18",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today’s date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today’s date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+2019",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 177,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "old-lab-test",
+        "exit": 0,
+        "seconds": 1.473783928,
+        "capture_sha256": "bdf05972e90a5737240957f3212db83ccb5f45c6b01182e6caf1cf651e6b1f3d",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Todayʼs date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Todayʼs date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+02BC",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 187,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "old-known-lab",
+        "exit": 0,
+        "seconds": 0.935241872,
+        "capture_sha256": "c28ccc6537201c450f0b15b24c1381d333abbf96f6b8a41f8987e7efaf1c2ad8",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/v1/messages": 2,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 1
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Todayʹs date is 2026/11/07."
+        ],
+        "date_codepoints": {
+          "Todayʹs date is 2026/11/07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+02B9",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002F",
+            "U+0031",
+            "U+0031",
+            "U+002F",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 175,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].toolsearch_calls",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      },
+      {
+        "name": "wrapped-old-known-lab",
+        "exit": 0,
+        "seconds": 3.830029367,
+        "capture_sha256": "4434376bc3cc78aa4bb35a4ee75719d5b6267ec539fb7f42e9192e83a90f4185",
+        "requests": {
+          "/v1/messages": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "date_lines": [
+          "Todayʹs date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Todayʹs date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+02B9",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      }
+    ],
+    "interactive-summary": [
+      {
+        "name": "current-interactive-final",
+        "exit": 0,
+        "seconds": 9.828686411,
+        "capture_sha256": "65c7ca22c250b3e49f488cd150da7ac99d433b182a21bc2a1483a377ab66bd6d",
+        "requests": {
+          "/api/eval/sdk-zAZezfDKGoZuXXKe": 1,
+          "/api/claude_code/settings": 1,
+          "/api/claude_code/policy_limits": 5,
+          "/api/claude_cli/bootstrap": 1,
+          "/api/claude_code_penguin_mode": 1,
+          "/mcp-registry/v0/servers": 1,
+          "/anthropics/claude-code/refs/heads/main/CHANGELOG.md": 1,
+          "/model-catalog/v1/catalog.json": 1,
+          "/v1/messages": 2,
+          "/claude-code-releases/plugins/claude-plugins-official/latest": 1,
+          "/model-catalog/v1/catalog.json.raw-sig.json": 1,
+          "/claude-code-releases/plugins/claude-plugins-official/%7B%7D.zip": 1,
+          "/api/claude_code/organizations/metrics_enabled": 1,
+          "/api/event_logging/v2/batch": 2
+        },
+        "model_requests": 2,
+        "device_ids": [
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 387,
+        "identity_field_paths": [
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.deviceID",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.entrypoint",
+          "/api/eval/sdk-zAZezfDKGoZuXXKe.attributes.platform",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].projectDirsSearched",
+          "/api/event_logging/v2/batch.events[].event_data.additional_metadata[decoded].served_has_runtime",
+          "/api/event_logging/v2/batch.events[].event_data.device_id",
+          "/api/event_logging/v2/batch.events[].event_data.entrypoint",
+          "/api/event_logging/v2/batch.events[].event_data.env.arch",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform",
+          "/api/event_logging/v2/batch.events[].event_data.env.platform_raw",
+          "/api/event_logging/v2/batch.events[].event_data.env.runtimes",
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 1
+      },
+      {
+        "name": "wrapped-interactive-final",
+        "exit": 0,
+        "seconds": 15.630414204000001,
+        "capture_sha256": "1984ddd785f14167c7c604f92c2f5b126dbffb579abff7f15963b48a1bd1f964",
+        "requests": {
+          "/api/claude_code/policy_limits": 5,
+          "/api/claude_code/settings": 1,
+          "/v1/messages": 1,
+          "/claude-code-releases/plugins/claude-plugins-official/latest": 1,
+          "/claude-code-releases/plugins/claude-plugins-official/%7B%7D.zip": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 1
+      }
+    ],
+    "inherited-routing-summary": [
+      {
+        "name": "wrapped-inherited-api",
+        "exit": 0,
+        "seconds": 8.510432403,
+        "capture_sha256": "bf832ef2e18d8a53ed240dd143348b340c369237043d6622e0a0b2f0d0f36a00",
+        "requests": {
+          "/api/claude_code/policy_limits": 4,
+          "/api/claude_code/settings": 1,
+          "/v1/messages": 1
+        },
+        "model_requests": 1,
+        "device_ids": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "date_lines": [
+          "Today's date is 2026-11-07."
+        ],
+        "date_codepoints": {
+          "Today's date is 2026-11-07.": [
+            "U+0054",
+            "U+006F",
+            "U+0064",
+            "U+0061",
+            "U+0079",
+            "U+0027",
+            "U+0073",
+            "U+0020",
+            "U+0064",
+            "U+0061",
+            "U+0074",
+            "U+0065",
+            "U+0020",
+            "U+0069",
+            "U+0073",
+            "U+0020",
+            "U+0032",
+            "U+0030",
+            "U+0032",
+            "U+0036",
+            "U+002D",
+            "U+0031",
+            "U+0031",
+            "U+002D",
+            "U+0030",
+            "U+0037",
+            "U+002E"
+          ]
+        },
+        "timezone_strings": [],
+        "decoded_json_fields": 1,
+        "identity_field_paths": [
+          "/v1/messages.metadata.user_id[decoded].device_id"
+        ],
+        "unexpected_auth": 0,
+        "tls_errors": 0
+      }
+    ]
+  },
+  "binaries": {
+    "2.1.169": {
+      "sha256": "6d8d510c715b899307b7d29a1062d43e62c99370c55330dac3ec1851a2fbf7c8",
+      "codesign_verification": "valid on disk; satisfies Designated Requirement",
+      "architecture": "x86_64"
+    },
+    "2.1.319": {
+      "sha256": "af6f1f5510ae98d56a155bf8f007aa9d5b44efccc9c10c8e10ef35039e95a940",
+      "codesign_verification": "valid on disk; satisfies Designated Requirement",
+      "architecture": "x86_64"
+    }
+  }
+}

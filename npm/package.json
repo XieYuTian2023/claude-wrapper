@@ -1,0 +1,21 @@
+{
+  "name": "claude-wrapper-local",
+  "version": "0.3.1",
+  "description": "A native macOS profile and verified-egress launcher for Claude Code",
+  "private": true,
+  "license": "UNLICENSED",
+  "os": ["darwin"],
+  "cpu": ["x64", "arm64"],
+  "bin": {
+    "claude-wrapper": "bin/claude-wrapper",
+    "cw": "bin/claude-wrapper"
+  },
+  "files": [
+    "bin/claude-wrapper",
+    "native/darwin-x64",
+    "native/darwin-arm64",
+    "runtime-sha256.json",
+    "LICENSE.fishhook",
+    "README.md"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "2.1.169": {
+    "bunVersion": "1.3.14",
+    "bunEnvFollowsReplacement": false,
+    "metaEnvFollowsReplacement": false,
+    "bunEnvConfigurable": false,
+    "readonlyAccepted": true
+  },
+  "2.1.319": {
+    "bunVersion": "1.4.4",
+    "bunEnvFollowsReplacement": false,
+    "metaEnvFollowsReplacement": false,
+    "bunEnvConfigurable": false,
+    "readonlyAccepted": false,
+    "readonlyError": "'process.env' only accepts a configurable, writable, and enumerable data descriptor"
+  }
+}
