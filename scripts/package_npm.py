@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pack local npm distribution from built native artifacts; never publishes."""
+"""Build an npm tarball from precompiled native artifacts."""
 import argparse
 import hashlib
 import json
@@ -25,7 +25,7 @@ def main():
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
     metadata = json.loads((ROOT / "npm/package.json").read_text())
-    assert metadata["private"] is True and not metadata.get("scripts")
+    assert not metadata.get("private") and not metadata.get("scripts")
     assert not metadata.get("dependencies") and not metadata.get("optionalDependencies")
     assert metadata["os"] == ["darwin"] and metadata["cpu"] == ["x64", "arm64"]
     runtime = {}

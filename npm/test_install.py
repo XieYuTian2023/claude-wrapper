@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 
 
@@ -25,6 +26,9 @@ def main():
     parser.add_argument("--tui-out", type=Path, help="also run the actual PTY suite through the installed npm bin")
     args = parser.parse_args()
     archive = args.archive.resolve(strict=True)
+    with tarfile.open(archive, "r:gz") as packed:
+        packed_metadata = json.load(packed.extractfile("package/package.json"))
+    package_name = packed_metadata["name"]
     npm = shutil.which("npm")
     assert npm, "npm is required"
     checks = {}
@@ -59,9 +63,9 @@ def main():
                                 text=True, timeout=15)
         assert result.returncode != 0 and "还没有配置" in result.stderr and not result.stdout
         checks["short_command_uses_direct_start"] = True
-        package = prefix / "lib/node_modules/claude-wrapper-local"
+        package = prefix / "lib/node_modules" / package_name
         metadata = json.loads((package / "package.json").read_text())
-        assert metadata["private"] is True and not metadata.get("scripts") and not metadata.get("dependencies")
+        assert metadata == packed_metadata and not metadata.get("scripts") and not metadata.get("dependencies")
         checks["no_lifecycle_scripts_or_dependencies"] = True
         runtime = json.loads((package / "runtime-sha256.json").read_text())
         for arch, row in runtime.items():
@@ -157,7 +161,7 @@ def main():
                                        text=True, timeout=180)
             assert completed.returncode == 0, {"ptyExit": completed.returncode, "stdout": completed.stdout[-3000:], "stderr": completed.stderr[-2000:]}
             checks["installed_tui_real_pty_suite"] = True
-        run([npm, "uninstall", "--global", "--prefix", str(prefix), "--ignore-scripts", "--offline", "--no-audit", "--no-fund", "claude-wrapper-local"])
+        run([npm, "uninstall", "--global", "--prefix", str(prefix), "--ignore-scripts", "--offline", "--no-audit", "--no-fund", package_name])
         assert not binary.exists() and not binary.is_symlink() and not package.exists()
         assert not shortcut.exists() and not shortcut.is_symlink()
         assert (profiles / "npm-fixture.toml").read_text() == a and state.read_text() == marker

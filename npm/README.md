@@ -4,14 +4,16 @@ Claude Wrapper 是第三方 Claude Code 启动器，提供按 Profile 配置的�
 
 ## 📦 安装与更新
 
-需要官方 Claude Code、npm，以及可用的 HTTP(S) 代理或已连接的系统 VPN。在本地 `.tgz` 所在目录执行：
+需要官方 Claude Code、npm，以及可用的 HTTP(S) 代理或已连接的系统 VPN。通过 npm 安装：
 
 ```sh
-npm install -g ./claude-wrapper-local-0.3.2.tgz
+npm install -g claude-wrapper-macos
 claude-wrapper ui
 ```
 
-更新时安装新版 `.tgz`。卸载命令为 `npm uninstall -g claude-wrapper-local`。Profile 和客户端数据位于 `~/Library/Application Support/claude-wrapper/profiles`。
+更新可再次运行 `npm install -g claude-wrapper-macos`，卸载用 `npm uninstall -g claude-wrapper-macos`。
+
+如果以前安装过 `claude-wrapper-local`，请先运行 `npm uninstall -g claude-wrapper-local`，再安装 npm 版。新版会沿用 `~/Library/Application Support/claude-wrapper/profiles` 中的配置和客户端数据。
 
 ## ⚙️ 配置与使用
 

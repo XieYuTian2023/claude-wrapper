@@ -1,9 +1,16 @@
 {
-  "name": "claude-wrapper-local",
+  "name": "claude-wrapper-macos",
   "version": "0.3.2",
   "description": "A native macOS profile and verified-egress launcher for Claude Code",
-  "private": true,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XieYuTian2023/claude-wrapper.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "os": ["darwin"],
   "cpu": ["x64", "arm64"],
   "bin": {
