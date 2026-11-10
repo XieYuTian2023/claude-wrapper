@@ -115,6 +115,13 @@ pub(super) fn candidates(requested: &str) -> Result<Vec<String>> {
         return Ok(vec![requested.to_owned()]);
     }
     let active = active_interfaces()?;
+    ensure!(
+        !active.is_empty(),
+        "no active VPN tunnel found; connect your VPN or configure its HTTP(S) proxy"
+    );
+    if active.len() == 1 {
+        return Ok(active);
+    }
     let mut routed = Vec::new();
     for route in [
         ["-inet", "default"],
@@ -135,13 +142,11 @@ pub(super) fn candidates(requested: &str) -> Result<Vec<String>> {
             routed.push(name);
         }
     }
-    if routed.is_empty() && active.len() == 1 {
-        return Ok(active);
+    for name in active {
+        if !routed.contains(&name) {
+            routed.push(name);
+        }
     }
-    ensure!(
-        !routed.is_empty(),
-        "no active VPN interface could be selected automatically; select an interface in the Profile or configure its HTTP(S) proxy"
-    );
     Ok(routed)
 }
 

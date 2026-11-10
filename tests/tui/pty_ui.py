@@ -342,7 +342,7 @@ def exercise_management(binary, fixture, out, rows=42, columns=132):
         require(not list((fixture/"profiles").glob("*.toml")),"Cancelling preset creation saved a Profile")
         checks["empty_preset_creation_can_cancel"]=True
         ui.key("n")
-        screen = ui.wait_text(["新建配置","配置名","时区"])
+        screen = ui.wait_text(["新建配置", "配置名", "时区", "自动固定", "2–30 秒"])
         require("主机名" not in screen and "用户名" not in screen,"Retired alias fields are still visible")
         ui.snapshot("03-new-form")
         for index,value in enumerate(("qa-west","America/Los_Angeles")):
@@ -351,7 +351,7 @@ def exercise_management(binary, fixture, out, rows=42, columns=132):
         ui.key(b"\x1b[B"*5)
         ui.key(b"\r")
         ui.wait_text(["选择固定出口方式", "仅校验地区", "自动固定", "手动输入"])
-        ui.key(b"\x1b[B"*2+b"\r")
+        ui.key(b"\x1b[B\r")
         ui.wait_text(["手动输入出口"])
         form_value(ui,"8.8.8")
         ui.key(b"\r")
@@ -374,7 +374,7 @@ def exercise_management(binary, fixture, out, rows=42, columns=132):
         ui.key(b"\x1b")
         ui.key(b"\x1b[B\r")
         ui.wait_text(["选择出口复查间隔", "30 秒", "自定义秒数"])
-        ui.key(b"\x1b[B"*4+b"\r")
+        ui.key(b"\x1b[B\r")
         ui.wait_text(["自定义检查间隔"])
         form_value(ui,"0")
         ui.key(b"\r")

@@ -9,6 +9,7 @@ use std::{
 use tokio::{
     io::{AsyncBufRead, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     task::JoinHandle,
+    time::sleep,
 };
 use tokio_native_tls::TlsAcceptor;
 
@@ -174,7 +175,7 @@ async fn adaptive_checks_ignore_probe_traffic_and_accelerate_on_a_burst() {
 
     proxy.report_cn.store(true, Ordering::SeqCst);
     let requests = async {
-        for _ in 0..3 {
+        for _ in 0..8 {
             drop(open_stream(&session.url).await);
         }
     };
@@ -184,7 +185,7 @@ async fn adaptive_checks_ignore_probe_traffic_and_accelerate_on_a_burst() {
             failure = monitor(&session.probe, Duration::from_secs(30), Some(activity)) => failure,
         }
     };
-    let (_, failure) = timeout(Duration::from_secs(10), async {
+    let (_, failure) = timeout(Duration::from_secs(5), async {
         tokio::join!(requests, check)
     })
     .await

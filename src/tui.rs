@@ -1,6 +1,6 @@
 //! Terminal-only configuration workspace. Claude runs only after an explicit handoff.
 use crate::journal::{self, Category};
-use crate::profile::{self, ExitIp, IdentityMode, NetworkMode, Profile};
+use crate::profile::{self, ExitIp, NetworkMode, Profile};
 use anyhow::{Context, Result, ensure};
 use crossterm::{
     cursor::{Hide, Show},
@@ -159,27 +159,6 @@ const EXIT_INTERVAL_FIELD: usize = 8;
 fn random_label(prefix: &str) -> Result<String> {
     Ok(format!("{prefix}{}", &profile::new_device_id()?[..8]))
 }
-fn new_profile() -> Result<Profile> {
-    Ok(Profile {
-        timezone: ZONES[0].into(),
-        locale: "en_US.UTF-8".into(),
-        proxy_url: None,
-        proxy_env: None,
-        geoip_url: None,
-        expected_exit_ip: None,
-        expected_exit_country: None,
-        exit_check_interval_seconds: None,
-        network: Some(NetworkMode::ManagedVpn),
-        identity: Some(IdentityMode::Bun),
-        hide_interfaces: None,
-        native_identity_guard: None,
-        isolate_identity_files: None,
-        vpn_interface: Some("auto".into()),
-        device_id: Some(profile::new_device_id()?),
-        telemetry: Some(false),
-        api_base_url: None,
-    })
-}
 #[derive(Clone)]
 struct Form {
     fields: Vec<String>,
@@ -190,7 +169,7 @@ struct Form {
 }
 impl Form {
     fn new() -> Result<Self> {
-        Self::from_profile(random_label("us-")?, new_profile()?, false)
+        Self::from_profile(random_label("us-")?, Profile::new(ZONES[0])?, false)
     }
     fn from_profile(name: String, profile: Profile, edit: bool) -> Result<Self> {
         let network = if profile.vpn_interface.is_some() {
@@ -420,15 +399,15 @@ impl VpnPicker {
 
 const IP_CHOICES: [(&str, &str); 3] = [
     ("", "仅校验地区"),
-    ("auto", "自动固定（连续三次探测）"),
+    ("auto", "自动固定（默认）"),
     ("manual", "手动输入 IP…"),
 ];
 const INTERVAL_CHOICES: [(&str, &str); 6] = [
     ("15", "15 秒"),
-    ("30", "30 秒（默认）"),
+    ("30", "30 秒"),
     ("60", "60 秒"),
     ("120", "120 秒"),
-    ("auto", "自动（流量高时更频繁）"),
+    ("auto", "自动（默认，流量高时更频繁）"),
     ("manual", "自定义秒数…"),
 ];
 
@@ -725,7 +704,7 @@ impl HealthJob {
             } else if error.contains("GeoIP exit IP mismatch") {
                 "固定 IP 不匹配，已阻断。按 L 查看实际值"
             } else if error.contains("automatic exit IP changed during learning") {
-                "探测 IP 不一致，自动锁定未完成"
+                "探测 IP 不一致。若节点会轮换 IP，可改为仅校验地区"
             } else if error.contains("GeoIP exit country mismatch") {
                 "出口地区不匹配，已阻断。按 L 查看实际值"
             } else if error.contains("explicit Claude subscription OAuth credential") {
@@ -839,10 +818,10 @@ impl App {
         let (name, value) = form.result()?;
         if let Some(original) = &form.original {
             profile::update(&self.directory, original, &value)?;
-            self.notice = "已保存配置；设备 ID 与 Claude 状态保持。".into();
+            self.notice = "已保存配置。".into();
         } else {
             profile::save(&self.directory, &name, &value)?;
-            self.notice = "已创建独立身份配置。".into();
+            self.notice = "已创建配置。".into();
         }
         self.reload(Some(&name))
     }
@@ -1057,7 +1036,7 @@ impl App {
                             value.device_id = Some(profile::new_device_id()?);
                             profile::save(&self.directory, &text, &value)?;
                             self.reload(Some(&text))?;
-                            self.notice = "已复制配置并生成新设备 ID；未复制 Claude 状态。".into();
+                            self.notice = "已复制配置。新配置有独立的登录和历史。".into();
                             Ok(())
                         })(),
                         PromptKind::Target => {
@@ -1147,10 +1126,7 @@ impl App {
                             Ok(())
                         })();
                         match result {
-                            Ok(()) => {
-                                self.notice =
-                                    format!("已应用{}预设；设备 ID 保持。", ZONE_NAMES[selected])
-                            }
+                            Ok(()) => self.notice = format!("已应用{}预设。", ZONE_NAMES[selected]),
                             Err(error) => self.error(error),
                         }
                         Mode::Home
@@ -1551,10 +1527,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         columns[0],
         &mut selected,
     );
-    let mut detail = vec![Line::from(Span::styled(
-        "本地文件保持真实路径",
-        Style::default().fg(t.teal),
-    ))];
+    let mut detail = Vec::new();
     if let Some(name) = app.selected_name() {
         if let Ok(value) = profile::load(&app.directory, name)
             && value.validate().is_ok()
@@ -1581,7 +1554,11 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             )));
             let interval = value.exit_check_interval();
             let interval_label = if interval.is_auto() {
-                "自动（约 5–30 秒）".into()
+                format!(
+                    "自动（约 {}–{} 秒）",
+                    profile::AUTO_MIN_SECONDS,
+                    profile::AUTO_IDLE_SECONDS
+                )
             } else {
                 format!("{interval} 秒")
             };
@@ -1600,13 +1577,6 @@ fn render(frame: &mut Frame<'_>, app: &App) {
                 }
                 None => {}
             }
-            detail.push(Line::from(format!(
-                "客户端标识  {}",
-                value
-                    .device_id
-                    .map(|id| format!("{}…", id.chars().take(12).collect::<String>()))
-                    .unwrap_or_else(|| "启动时初始化".into())
-            )));
         } else {
             detail.push(Line::from("配置无效或无法读取，请检查配置文件。"));
         }
@@ -1732,7 +1702,11 @@ fn render(frame: &mut Frame<'_>, app: &App) {
                 } else if index == EXIT_INTERVAL_FIELD {
                     let interval = &form.fields[index];
                     if interval == "auto" {
-                        "‹ 自动（约 5–30 秒） · Enter 选择 ›".into()
+                        format!(
+                            "‹ 自动（约 {}–{} 秒） · Enter 选择 ›",
+                            profile::AUTO_MIN_SECONDS,
+                            profile::AUTO_IDLE_SECONDS
+                        )
                     } else {
                         format!("‹ {interval} 秒 · Enter 选择 ›")
                     }
@@ -1842,10 +1816,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         Mode::Preset { selected, .. } => {
             let rect = popup(area, 68, 10);
             frame.render_widget(Clear, rect);
-            let mut lines = vec![
-                Line::from("只应用美国时区与区域；保留客户端标识。"),
-                Line::from(""),
-            ];
+            let mut lines = vec![Line::from("应用所选时区与区域。"), Line::from("")];
             for (index, name) in ZONE_NAMES.iter().enumerate() {
                 lines.push(Line::from(Span::styled(
                     format!("{} {name}", if index == *selected { "›" } else { " " }),
@@ -1861,7 +1832,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         Mode::Help => {
             let rect = popup(area, 82, 19);
             frame.render_widget(Clear, rect);
-            frame.render_widget(Paragraph::new("↑/↓ 选择已有配置，Enter 启动选中配置\nS 设为默认，之后可用 claude-wrapper start 直接启动\nN 新建，E 编辑；编辑保留设备 ID 与客户端状态\nC 复制会生成新的设备 ID，不复制登录/历史\nD 删除仅移除配置，保留 Claude 状态\nP 美国西/中/东预设；表单中用 Ctrl+P\n沿用启动时的工作目录，T 指定 Claude 程序\nH 检查出口 · R 重置自动出口 · L 分类日志\n探测仅对应当时配置，切换/编辑后需重新检查\n↑/↓ 切字段，Ctrl+A 清空，Ctrl+S 保存\nVPN 接口及出口字段按 Enter 打开列表\nA 切换动画；ui --no-animation / CLAUDE_WRAPPER_REDUCED_MOTION 可减动\nNO_COLOR 关闭颜色；Ctrl+C / Q 退出\n任意键返回").wrap(Wrap{trim:false}).block(t.block(" 帮助 ")),rect);
+            frame.render_widget(Paragraph::new("↑/↓ 选择已有配置，Enter 启动选中配置\nS 设为默认，之后可用 claude-wrapper start 直接启动\nN 新建 · E 编辑 · C 复制 · D 删除配置\nP 美国西/中/东预设；表单中用 Ctrl+P\nT 指定 Claude 程序\nH 检查出口 · R 重置自动出口 · L 分类日志\n修改配置后可按 H 重新检查\n↑/↓ 切字段，Ctrl+A 清空，Ctrl+S 保存\nVPN 接口及出口字段按 Enter 打开列表\nA 切换动画；ui --no-animation / CLAUDE_WRAPPER_REDUCED_MOTION 可减动\nNO_COLOR 关闭颜色；Ctrl+C / Q 退出\n任意键返回").wrap(Wrap{trim:false}).block(t.block(" 帮助 ")),rect);
         }
     }
 }
@@ -1945,7 +1916,7 @@ mod tests {
     #[test]
     fn editing_keeps_id_and_client_state_while_copy_uses_a_new_id() {
         let root = tempfile::tempdir().unwrap();
-        let original = new_profile().unwrap();
+        let original = Profile::new(ZONES[0]).unwrap();
         profile::save(root.path(), "qa-west", &original).unwrap();
         let state = root.path().join("clients/qa-west");
         fs::create_dir_all(&state).unwrap();
@@ -1968,7 +1939,7 @@ mod tests {
     #[test]
     fn damaged_unicode_device_id_renders_invalid_state_at_80_by_24() {
         let root = tempfile::tempdir().unwrap();
-        let mut value = new_profile().unwrap();
+        let mut value = Profile::new(ZONES[0]).unwrap();
         value.device_id = Some("abc😀😀😀".into());
         fs::write(
             root.path().join("qa-broken.toml"),
@@ -2011,7 +1982,7 @@ mod tests {
     #[test]
     fn invalid_edit_does_not_replace_existing_profile() {
         let root = tempfile::tempdir().unwrap();
-        let value = new_profile().unwrap();
+        let value = Profile::new(ZONES[0]).unwrap();
         let path = profile::save(root.path(), "qa-west", &value).unwrap();
         let before = fs::read(&path).unwrap();
         let mut bad = value;
@@ -2023,7 +1994,7 @@ mod tests {
     #[test]
     fn vpn_picker_preserves_inactive_profile_until_selection_is_saved() {
         let root = tempfile::tempdir().unwrap();
-        let mut profile = new_profile().unwrap();
+        let mut profile = Profile::new(ZONES[0]).unwrap();
         profile.vpn_interface = Some("utun90".into());
         profile::save(root.path(), "qa-vpn", &profile).unwrap();
         let mut form = Form::from_profile("qa-vpn".into(), profile, true).unwrap();

@@ -133,10 +133,13 @@ struct Settings {
     /// Expected public exit IPv4/IPv6 address, or auto to learn it.
     #[arg(long)]
     expected_exit_ip: Option<ExitIp>,
+    /// Check the configured region without requiring a fixed public IP.
+    #[arg(long, conflicts_with = "expected_exit_ip")]
+    region_only: bool,
     /// Expected exit country or region code (defaults to US).
     #[arg(long)]
     expected_exit_country: Option<String>,
-    /// Managed exit check cadence, 5–3600 seconds or auto (defaults to 30).
+    /// Managed exit check cadence, 5–3600 seconds or auto (default).
     #[arg(long)]
     exit_check_interval: Option<ExitCheckInterval>,
     /// macOS guarded relay or VPN, or explicitly allow the proxy environment alone.
@@ -197,6 +200,8 @@ impl Settings {
         }
         if let Some(ip) = self.expected_exit_ip {
             profile.expected_exit_ip = Some(ip);
+        } else if self.region_only {
+            profile.expected_exit_ip = None;
         }
         if let Some(country) = self.expected_exit_country {
             profile.expected_exit_country = Some(country.to_ascii_uppercase());
@@ -469,7 +474,11 @@ impl Plan {
         ) {
             match self.profile.exit_check_interval() {
                 ExitCheckInterval::Seconds(seconds) => println!("exit-interval  {seconds}s"),
-                ExitCheckInterval::Mode(_) => println!("exit-interval  auto (5–30s)"),
+                ExitCheckInterval::Mode(_) => println!(
+                    "exit-interval  auto ({}–{}s)",
+                    profile::AUTO_MIN_SECONDS,
+                    profile::AUTO_IDLE_SECONDS
+                ),
             }
         }
         if let Some(ip) = self.profile.expected_exit_ip {
@@ -729,25 +738,13 @@ fn manage(dir: &Path, action: ProfileAction) -> Result<()> {
             template,
             overrides,
         } => {
-            let mut profile = Profile {
-                timezone: template.timezone().to_owned(),
-                locale: "en_US.UTF-8".into(),
-                proxy_url: None,
-                proxy_env: None,
-                geoip_url: None,
-                expected_exit_ip: None,
-                expected_exit_country: None,
-                exit_check_interval_seconds: None,
-                network: None,
-                identity: Some(IdentityMode::Bun),
-                hide_interfaces: None,
-                native_identity_guard: None,
-                isolate_identity_files: None,
-                vpn_interface: None,
-                device_id: Some(profile::new_device_id()?),
-                telemetry: Some(false),
-                api_base_url: None,
-            };
+            let mut profile = Profile::new(template.timezone())?;
+            if overrides
+                .network
+                .is_some_and(|network| !matches!(network, NetworkMode::ManagedVpn))
+            {
+                profile.vpn_interface = None;
+            }
             overrides.apply(&mut profile);
             println!("{}", profile::save(dir, &name, &profile)?.display());
         }

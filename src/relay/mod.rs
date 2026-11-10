@@ -42,14 +42,14 @@ use tokio::{
     signal::unix::{SignalKind, signal},
     sync::mpsc,
     task::JoinSet,
-    time::{Instant, sleep, timeout},
+    time::{Instant, sleep_until, timeout},
 };
 
 use crate::{
     profile::ExitCheckInterval,
     proxy::{self, ExitPolicy, Probe},
 };
-use activity::{Activity, Observed, SAMPLE_INTERVAL};
+use activity::{Activity, Cadence, Observed, SAMPLE_INTERVAL};
 use process::ChildGroup;
 use upstream::Upstream;
 use vpn::Vpn;
@@ -291,22 +291,33 @@ fn authenticated_url(address: SocketAddr, secret: &[u8]) -> Result<(Url, HeaderV
 
 async fn monitor(probe: &Probe, interval: Duration, activity: Option<&Activity>) -> Error {
     let mut last_check = Instant::now();
-    let tick = if activity.is_some() {
-        SAMPLE_INTERVAL
-    } else {
-        interval
-    };
+    let mut last_sample = last_check;
+    let mut next_check = last_check + interval;
+    let mut cadence = Cadence::default();
     loop {
-        sleep(tick).await;
-        if activity
-            .is_some_and(|activity| !activity.take().busy() && last_check.elapsed() < interval)
+        let next_sample = last_sample + SAMPLE_INTERVAL;
+        let wake = if activity.is_some() {
+            next_sample.min(next_check)
+        } else {
+            next_check
+        };
+        sleep_until(wake).await;
+        let now = Instant::now();
+        if let Some(activity) = activity
+            && now >= next_sample
         {
+            cadence.observe(activity.take(), now - last_sample);
+            last_sample = now;
+            next_check = next_check.min(last_check + cadence.interval(interval));
+        }
+        if now < next_check {
             continue;
         }
         if let Err(error) = probe.check().await {
             return error.context("runtime proxy check failed");
         }
         last_check = Instant::now();
+        next_check = last_check + interval;
     }
 }
 
@@ -449,6 +460,7 @@ async fn verified_vpn(
     adaptive: bool,
 ) -> Result<(Session, Preflight)> {
     let mut failures = Vec::new();
+    let mut exit_rejection = None;
     for name in vpn::candidates(interface)? {
         let attempt = async {
             let mut session = Session::start_vpn(&name, exit, adaptive).await?;
@@ -461,15 +473,22 @@ async fn verified_vpn(
                 eprintln!("claude-wrapper: verified VPN interface {name}");
                 return Ok(result);
             }
-            Err(error) if error.is::<proxy::UnexpectedExitCountry>() => return Err(error),
-            Err(error) if error.is::<proxy::ExitIpError>() => return Err(error),
-            Err(error) => failures.push(format!("{name}: {error:#}")),
+            Err(error) => {
+                failures.push(format!("{name}: {error:#}"));
+                if error.is::<proxy::UnexpectedExitCountry>() || error.is::<proxy::ExitIpError>() {
+                    exit_rejection.get_or_insert(error);
+                }
+            }
         }
     }
-    Err(anyhow!(
+    let message = format!(
         "VPN preflight failed ({}). Select another tunnel or use the VPN app's HTTP(S) proxy",
         failures.join(" | ")
-    ))
+    );
+    Err(match exit_rejection {
+        Some(error) => error.context(message),
+        None => anyhow!(message),
+    })
 }
 
 pub fn doctor_vpn(interface: &str, exit: ExitPolicy<'_>, api: Option<&Url>) -> Result<Preflight> {

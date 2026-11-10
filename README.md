@@ -1,12 +1,12 @@
 # Claude Wrapper
 
-Claude Wrapper 是面向 macOS 的第三方 Claude Code 启动器。它按配置管理客户端的时区、区域设置和网络连接，在启动前校验公网出口，并可在会话运行期间持续复查。Claude Code 仍从当前工作目录启动，使用宿主系统的文件路径和权限。
+Claude Wrapper 是面向 macOS 的第三方 Claude Code 启动器。连接 VPN 后，创建一次 Profile，就可以用 `cw` 启动。Wrapper 会自动选择 VPN 接口、校验公网出口，并按流量调整复查频率。
 
 | 项目 | 支持范围 |
 | --- | --- |
 | 系统 | macOS。Intel Mac 已运行验证，Apple Silicon 已完成交叉构建 |
 | 网络 | HTTP(S) 代理，或已连接的系统 VPN 隧道 |
-| 配置 | 每个 Profile 独立保存启动参数和 Claude Code 配置目录 |
+| 配置 | 多套 Profile 可独立保存设置，并快速切换 |
 | 分发 | 本地 npm 安装包，包含两种 Mac 架构的预编译文件 |
 
 ## 📦 安装
@@ -14,7 +14,7 @@ Claude Wrapper 是面向 macOS 的第三方 Claude Code 启动器。它按配置
 需要已安装的官方 Claude Code 和 npm，以及可用的 HTTP(S) 代理或系统 VPN。下载或构建 `.tgz` 后，在安装包所在目录执行：
 
 ```sh
-npm install -g ./claude-wrapper-local-0.3.1.tgz
+npm install -g ./claude-wrapper-local-0.3.2.tgz
 claude-wrapper ui
 ```
 
@@ -22,11 +22,11 @@ npm 将 `claude-wrapper` 和 `cw` 安装到全局命令目录。更新时安装�
 
 ## ⚙️ 配置与启动
 
-运行 `claude-wrapper ui`，按 `N` 新建 Profile。输入名称后，用上下键移动到「网络方式」，用左右键切换。
+连接 VPN 后，运行 `claude-wrapper ui`，按 `N` 新建 Profile，按 `Ctrl+S` 保存。默认会自动选择 VPN 接口、固定出口 IP 和调整复查频率。需要更改网络方式时，用上下键移到对应字段，再用左右键切换。
 
 | 网络方式 | 配置方法 |
 | --- | --- |
-| VPN 隧道 | 先连接 VPN。在「VPN 接口」按 `Enter`，选择「自动选择」或列表中的活动接口 |
+| VPN 隧道（默认） | 自动选择会优先尝试系统路由使用的隧道，再尝试其他活动隧道。也可在「VPN 接口」指定 |
 | HTTP(S) 代理 | 在「代理地址」填写代理服务提供的地址，例如 `http://127.0.0.1:8080` |
 | 环境变量代理 | 填写保存代理 URL 的环境变量名，适用于需要认证的代理 |
 
@@ -41,7 +41,7 @@ npm 将 `claude-wrapper` 和 `cw` 安装到全局命令目录。更新时安装�
 | `H`、`R`、`L` | 检查出口、重置自动固定 IP、查看分类日志 |
 | `?`、`Q` | 查看帮助、退出界面 |
 
-复制 Profile 会生成新的设备标识，并在首次启动时使用独立的客户端目录。删除 Profile 会保留原有客户端数据。配置变更在下一次启动时生效。
+复制 Profile 会创建独立的会话配置。删除 Profile 后，其登录和历史仍可保留。配置变更在下一次启动时生效。
 
 如需在 zsh 中通过 `claude` 启动 Wrapper，可定义 `claude() { command cw "$@"; }`。直接运行官方客户端时使用 `command claude`。
 
@@ -50,19 +50,19 @@ npm 将 `claude-wrapper` 和 `cw` 安装到全局命令目录。更新时安装�
 | 设置 | 行为 |
 | --- | --- |
 | 预期出口地区 | 默认 `US`，也可选择其他地区。检测到中国大陆（`CN`）出口时拒绝连接 |
-| 固定出口 IP | 可仅校验地区、指定 IPv4 或 IPv6，或通过三次一致的独立探测自动固定 IP |
-| 运行中复查 | 托管代理和 VPN 默认每 30 秒复查。支持 5–3600 秒的固定间隔，也支持按流量调整 |
+| 固定出口 IP | 新建 Profile 默认在三次探测结果一致后固定 IP。也可选择仅校验地区，或指定 IPv4 或 IPv6 |
+| 运行中复查 | 托管代理和 VPN 默认自动调整复查间隔，也可设为固定的 5–3600 秒 |
 
-自动复查模式在空闲时约每 30 秒检查，流量密集时最快约每 5 秒检查。采样依据是新建连接数和加密流量字节数。预检失败时客户端无法启动。托管会话运行期间，复查失败会关闭中继并结束客户端进程组。
+自动复查根据近期流量连续调整间隔。流量越大，间隔越接近 2 秒。流量下降后，间隔逐渐回到约 30 秒。预检失败会阻止启动，运行中的复查失败会结束会话。主动更换节点后，可按 `R` 让配置重新学习出口 IP。对于会轮换 IP 的节点，可选择「仅校验地区」。
 
 地区和 IP 只反映探测请求所走的路径。代理或 VPN 按目的地分流时，其他请求的出口可能不同。时区设置和出口地区校验分别配置。服务使用资格以服务提供方的条款为准。
 
 ### 命令行
 
-以下命令创建一个使用现有 VPN 的 Profile。第一条命令可用 `--proxy http://127.0.0.1:8080` 替换 `--vpn-interface auto` 来配置 HTTP(S) 代理。
+以下命令创建一个自动选择 VPN 的 Profile。要使用 HTTP(S) 代理，可在创建命令中追加 `--proxy http://127.0.0.1:8080`。
 
 ```sh
-claude-wrapper profile create work-vpn --vpn-interface auto --exit-check-interval auto
+claude-wrapper profile create work-vpn
 claude-wrapper doctor work-vpn
 claude-wrapper run work-vpn -- --version
 ```
@@ -83,15 +83,11 @@ expected_exit_ip = "auto"
 exit_check_interval_seconds = "auto"
 ```
 
-省略 `expected_exit_ip` 时仅校验地区。`exit_check_interval_seconds` 也接受整数，例如 `45`。认证代理用 `proxy_env = "TEAM_PROXY"` 指定存放代理 URL 的环境变量。时区支持美国时区，默认区域设置为 `en_US.UTF-8`。单次启动的命令行参数优先于文件中的对应设置。
+手写 Profile 时，省略 `expected_exit_ip` 表示仅校验地区。命令行可用 `--region-only` 选择同一行为。`exit_check_interval_seconds` 也接受整数，例如 `45`。认证代理用 `proxy_env = "TEAM_PROXY"` 指定存放代理 URL 的环境变量。时区支持美国时区，默认区域设置为 `en_US.UTF-8`。单次启动的命令行参数优先于文件中的对应设置。
 
 ## 🛠️ 实现与构建
 
-主程序使用 Rust，终端界面使用 Ratatui，macOS 辅助程序使用 C 和 Objective-C。启动链分为三个阶段：
-
-1. **解析配置。** 读取 Profile 和命令行覆盖值，解析客户端路径，通过 `CLAUDE_CONFIG_DIR` 为每个 Profile 选择独立的客户端目录。
-2. **建立网络路径。** 托管模式为每个会话创建带随机凭据的本地 HTTP CONNECT 中继。代理模式将连接转发给上游代理。VPN 模式将 TCP 和 DNS 绑定到选定接口。启动前通过中继校验出口，并向 Claude API 发出无凭据 HTTPS HEAD 请求。
-3. **启动并监督客户端。** `socket-guard` 用 macOS Seatbelt 限制常规直连和对指定系统身份来源的访问。默认 Bun 模式通过预加载入口加载原生库，并重绑定受支持的时区和区域查询。启动器负责复查出口，并在检查失败时关闭中继、清理会话进程组。
+主程序使用 Rust，终端界面使用 Ratatui，macOS 辅助程序使用 C 和 Objective-C。主程序解析 Profile、建立会话中继，并在出口和 API 连通性检查通过后启动客户端。各组件的实现细节见下表。
 
 | 代码位置 | 职责 |
 | --- | --- |
@@ -113,7 +109,7 @@ cp native/macos/build/identity-launch native/macos/build/libclaude-wrapper.dylib
 
 npm 包由 `scripts/package_npm.py` 从已构建的两种架构生成。脚本校验 Mach-O 架构和归档文件，安装入口按本机架构执行对应的原生程序。[打包脚本](scripts/package_npm.py) · [npm 包说明](npm/README.md)
 
-原生查询覆盖与 Claude Code 的版本和签名策略有关。系统用户名、主机名、项目路径、文件内容和服务账号仍可能反映宿主身份。部分依赖本地监听、系统服务或 Unix 域套接字的工具会受到 Seatbelt 规则限制。[系统规则与已知边界](native/egress/README.md)
+兼容性取决于 Claude Code 版本及其所用的系统服务。[系统规则与已知边界](native/egress/README.md)
 
 ## 许可证
 

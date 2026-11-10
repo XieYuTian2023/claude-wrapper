@@ -11,7 +11,8 @@ use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 
-pub const DEFAULT_EXIT_CHECK_INTERVAL: u64 = 30;
+pub const AUTO_MIN_SECONDS: u64 = 2;
+pub const AUTO_IDLE_SECONDS: u64 = 30;
 pub const MIN_EXIT_CHECK_INTERVAL: u64 = 5;
 pub const MAX_EXIT_CHECK_INTERVAL: u64 = 3600;
 
@@ -32,6 +33,12 @@ pub enum ExitCheckMode {
     Auto,
 }
 
+impl Default for ExitCheckInterval {
+    fn default() -> Self {
+        Self::Mode(ExitCheckMode::Auto)
+    }
+}
+
 impl ExitCheckInterval {
     pub fn is_auto(self) -> bool {
         matches!(self, Self::Mode(ExitCheckMode::Auto))
@@ -40,7 +47,7 @@ impl ExitCheckInterval {
     pub fn idle_seconds(self) -> u64 {
         match self {
             Self::Seconds(seconds) => seconds,
-            Self::Mode(_) => DEFAULT_EXIT_CHECK_INTERVAL,
+            Self::Mode(_) => AUTO_IDLE_SECONDS,
         }
     }
 }
@@ -147,13 +154,34 @@ pub struct Profile {
 }
 
 impl Profile {
+    pub fn new(timezone: &str) -> Result<Self> {
+        Ok(Self {
+            timezone: timezone.into(),
+            locale: "en_US.UTF-8".into(),
+            proxy_url: None,
+            proxy_env: None,
+            geoip_url: None,
+            expected_exit_ip: Some(ExitIp::Auto),
+            expected_exit_country: None,
+            exit_check_interval_seconds: Some(ExitCheckInterval::default()),
+            network: Some(NetworkMode::ManagedVpn),
+            identity: Some(IdentityMode::Bun),
+            hide_interfaces: None,
+            native_identity_guard: None,
+            isolate_identity_files: None,
+            vpn_interface: Some("auto".into()),
+            device_id: Some(new_device_id()?),
+            telemetry: Some(false),
+            api_base_url: None,
+        })
+    }
+
     pub fn exit_country(&self) -> &str {
         self.expected_exit_country.as_deref().unwrap_or("US")
     }
 
     pub fn exit_check_interval(&self) -> ExitCheckInterval {
-        self.exit_check_interval_seconds
-            .unwrap_or(ExitCheckInterval::Seconds(DEFAULT_EXIT_CHECK_INTERVAL))
+        self.exit_check_interval_seconds.unwrap_or_default()
     }
 
     pub fn validate(&self) -> Result<()> {

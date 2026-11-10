@@ -75,8 +75,13 @@ def main():
         checks["installed_native_version"] = version.startswith("claude-wrapper ")
         profiles = root / "profiles"
         cli = [str(binary), "--profiles-dir", str(profiles)]
-        run([*cli, "profile", "create", "npm-fixture", "--vpn-interface", "auto",
-             "--exit-check-interval", "45"])
+        run([*cli, "profile", "create", "npm-fixture"])
+        default_profile = (profiles / "npm-fixture.toml").read_text()
+        assert all(setting in default_profile for setting in (
+            'vpn_interface = "auto"', 'expected_exit_ip = "auto"',
+            'exit_check_interval_seconds = "auto"',
+        ))
+        checks["new_profile_uses_automatic_defaults"] = True
         invalid = subprocess.run(
             [*cli, "profile", "create", "bad-region", "--vpn-interface", "auto",
              "--expected-exit-country", "ZZ"],
@@ -94,6 +99,12 @@ def main():
         assert run([*cli, "profile", "list"]).stdout.strip() == "npm-fixture"
         checks["installed_profile_create_and_list"] = True
         run([*cli, "profile", "copy", "npm-fixture", "npm-copy"])
+        run([*cli, "profile", "create", "region-only", "--proxy", "http://127.0.0.1:8080",
+             "--region-only", "--exit-check-interval", "45"])
+        region_only = (profiles / "region-only.toml").read_text()
+        assert 'expected_exit_ip' not in region_only and 'vpn_interface' not in region_only
+        assert 'exit_check_interval_seconds = 45' in region_only
+        checks["explicit_proxy_region_and_interval_override_automatic_defaults"] = True
         a = (profiles / "npm-fixture.toml").read_text()
         b = (profiles / "npm-copy.toml").read_text()
         import re
@@ -103,12 +114,12 @@ def main():
         # Static preflight only: no exit probe, model, authentication or session.
         client = shutil.which("claude")
         if client:
-            plan = run([*cli, "run", "npm-fixture", "--target", client, "--dry-run"])
+            plan = run([*cli, "run", "region-only", "--target", client, "--dry-run"])
             assert "America/Los_Angeles" in plan.stdout
             assert "exit-interval  45s" in plan.stdout
             adaptive = run([*cli, "run", "npm-fixture", "--target", client, "--dry-run",
                             "--exit-check-interval", "auto"])
-            assert "exit-interval  auto (5–30s)" in adaptive.stdout
+            assert "exit-interval  auto (2–30s)" in adaptive.stdout
             checks["adaptive_exit_interval_supported"] = True
             assert "hostname" not in plan.stdout and "username" not in plan.stdout
             checks["installed_sibling_assets_static_preflight"] = True

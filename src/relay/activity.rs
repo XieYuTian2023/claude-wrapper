@@ -9,7 +9,11 @@ use std::{
 
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
-pub(super) const SAMPLE_INTERVAL: Duration = Duration::from_secs(5);
+use crate::profile::AUTO_MIN_SECONDS;
+
+pub(super) const SAMPLE_INTERVAL: Duration = Duration::from_secs(1);
+const ACTIVITY_HALF_LIFE_SECONDS: f64 = 4.0;
+const BYTES_PER_CONNECTION: f64 = 8.0 * 1024.0;
 
 #[derive(Default)]
 pub(super) struct Activity {
@@ -22,9 +26,24 @@ pub(super) struct Sample {
     pub bytes: u64,
 }
 
-impl Sample {
-    pub fn busy(&self) -> bool {
-        self.connections >= 3 || self.bytes >= 32 * 1024
+#[derive(Default)]
+pub(super) struct Cadence {
+    load: f64,
+}
+
+impl Cadence {
+    pub fn observe(&mut self, sample: Sample, elapsed: Duration) {
+        let seconds = elapsed.as_secs_f64();
+        let rate =
+            (sample.connections as f64 + sample.bytes as f64 / BYTES_PER_CONNECTION) / seconds;
+        // A burst raises the estimate immediately. Quiet samples let it decay gradually.
+        let recent = self.load * 0.5_f64.powf(seconds / ACTIVITY_HALF_LIFE_SECONDS);
+        self.load = rate.max(recent);
+    }
+
+    pub fn interval(&self, idle: Duration) -> Duration {
+        let min = idle.as_secs_f64().min(AUTO_MIN_SECONDS as f64);
+        Duration::from_secs_f64(min + (idle.as_secs_f64() - min) * (-self.load).exp())
     }
 }
 
@@ -125,7 +144,31 @@ mod tests {
         let sample = activity.take();
         assert_eq!(sample.connections, 0);
         assert_eq!(sample.bytes, (bytes.len() + 5) as u64);
-        assert!(sample.busy());
-        assert!(!activity.take().busy());
+        assert_eq!(activity.take().bytes, 0);
+    }
+
+    #[test]
+    fn cadence_responds_continuously_and_recovers_after_a_burst() {
+        let mut cadence = Cadence::default();
+        let idle = Duration::from_secs(30);
+        let minimum = Duration::from_secs(AUTO_MIN_SECONDS);
+        assert_eq!(cadence.interval(idle), idle);
+        let activity = Activity::default();
+        activity.record_bytes(2048);
+        cadence.observe(activity.take(), SAMPLE_INTERVAL);
+        let light = cadence.interval(idle);
+        activity.record_bytes(4096);
+        cadence.observe(activity.take(), SAMPLE_INTERVAL);
+        let moderate = cadence.interval(idle);
+        assert!(moderate < light && light < idle);
+
+        activity.record_bytes(128 * 1024);
+        cadence.observe(activity.take(), SAMPLE_INTERVAL);
+        let busy = cadence.interval(idle);
+        assert!(busy >= minimum && busy < minimum + Duration::from_millis(50));
+        cadence.observe(activity.take(), Duration::from_secs(4));
+        assert!(cadence.interval(idle) > busy);
+        cadence.observe(activity.take(), Duration::from_secs(100));
+        assert!(cadence.interval(idle) > idle - Duration::from_millis(1));
     }
 }
