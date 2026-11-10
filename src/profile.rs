@@ -446,7 +446,7 @@ pub fn set_default(dir: &Path, name: &str) -> Result<()> {
     temp.as_file().sync_all()?;
     temp.persist(dir.join(DEFAULT_PROFILE_FILE))
         .map_err(|error| error.error)
-        .context("Could not save the default profile")?;
+        .context("无法保存默认配置")?;
     Ok(())
 }
 

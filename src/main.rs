@@ -773,7 +773,7 @@ fn manage(dir: &Path, action: ProfileAction) -> Result<()> {
         ProfileAction::Delete { name } => profile::delete(dir, &name)?,
         ProfileAction::ResetExitIp { name } => {
             profile::reset_exit_pin(dir, &name)?;
-            println!("Cleared the pinned exit IP for {name}");
+            println!("已清除 {name} 的自动出口 IP");
         }
     }
     Ok(())
@@ -793,9 +793,7 @@ fn dispatch(cli: Cli) -> Result<i32> {
     if matches!(&cli.action, None | Some(Action::Ui { .. }))
         && (!io::stdin().is_terminal() || !io::stdout().is_terminal())
     {
-        println!(
-            "The interactive UI requires a terminal. You can also use profile, doctor, or run.\n"
-        );
+        println!("交互界面需要真实终端。也可使用 profile、doctor、run 命令。\n");
         Cli::command().print_help()?;
         println!();
         return Ok(0);

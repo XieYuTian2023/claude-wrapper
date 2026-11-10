@@ -133,23 +133,19 @@ impl Theme {
     }
 }
 const ZONES: [&str; 3] = ["America/Los_Angeles", "America/Chicago", "America/New_York"];
-const ZONE_NAMES: [&str; 3] = [
-    "US West - Los Angeles",
-    "US Central - Chicago",
-    "US East - New York",
-];
+const ZONE_NAMES: [&str; 3] = ["美国西部 · 洛杉矶", "美国中部 · 芝加哥", "美国东部 · 纽约"];
 const LABELS: [&str; 9] = [
-    "Profile name",
-    "Time zone",
-    "Network mode",
-    "VPN interface",
-    "Proxy address",
-    "Proxy environment variable",
-    "Pinned exit IP",
-    "Expected exit region",
-    "Exit check interval",
+    "配置名称",
+    "时区",
+    "网络方式",
+    "VPN 接口",
+    "代理地址",
+    "代理环境变量",
+    "固定出口 IP",
+    "预期出口地区",
+    "出口复查间隔",
 ];
-const NETWORKS: [&str; 3] = ["VPN tunnel", "HTTP(S) proxy", "Environment proxy"];
+const NETWORKS: [&str; 3] = ["VPN 隧道", "HTTP(S) 代理", "环境变量代理"];
 const VPN_NETWORK: usize = 0;
 const TIMEZONE_FIELD: usize = 1;
 const NETWORK_FIELD: usize = 2;
@@ -224,7 +220,7 @@ impl Form {
             Some(
                 exit_ip
                     .parse()
-                    .context("Pinned exit IP must be IPv4, IPv6, or auto")?,
+                    .context("固定出口 IP 须为 IPv4、IPv6 或 auto")?,
             )
         };
         let country = self.fields[EXIT_COUNTRY_FIELD].trim().to_ascii_uppercase();
@@ -232,7 +228,7 @@ impl Form {
         value.exit_check_interval_seconds = Some(
             self.fields[EXIT_INTERVAL_FIELD]
                 .parse()
-                .context("Enter the exit check interval in seconds")?,
+                .context("出口复查间隔须为秒数")?,
         );
         value.proxy_url = None;
         value.proxy_env = None;
@@ -250,7 +246,7 @@ impl Form {
             _ => {
                 ensure!(
                     !self.fields[PROXY_ENV_FIELD].trim().is_empty(),
-                    "Enter the proxy environment variable name"
+                    "请填写代理环境变量名"
                 );
                 value.network = Some(NetworkMode::ManagedRelay);
                 value.proxy_env = Some(self.fields[PROXY_ENV_FIELD].trim().into());
@@ -309,30 +305,30 @@ impl VpnPicker {
         let (interfaces, hint, current_status) = match discovery {
             Ok(interfaces) if interfaces.is_empty() => (
                 interfaces,
-                "No active VPN interfaces. Connect to a VPN and reopen the list.",
-                "Configured, inactive",
+                "未检测到活动接口。连接 VPN 后可重新打开列表。",
+                "当前配置，未检测到此接口",
             ),
             Ok(interfaces) => (
                 interfaces,
-                "Active system interfaces. Save and press H to check the exit.",
-                "Configured, inactive",
+                "活动接口来自系统。保存后可按 H 检查出口。",
+                "当前配置，未检测到此接口",
             ),
             Err(_) => (
                 Vec::new(),
-                "Could not list interfaces. Use automatic selection or enter an interface name.",
-                "Configured, status unknown",
+                "读取接口列表失败。可自动选择或手动输入。",
+                "当前配置，状态未知",
             ),
         };
         let mut choices = vec![VpnChoice {
             interface: Some("auto".into()),
-            label: "Auto-select (auto)".into(),
+            label: "自动选择（auto）".into(),
         }];
         choices.extend(
             interfaces
                 .into_iter()
                 .filter(|name| name != "auto")
                 .map(|name| VpnChoice {
-                    label: format!("{name} · Active"),
+                    label: format!("{name} · 活动接口"),
                     interface: Some(name),
                 }),
         );
@@ -354,7 +350,7 @@ impl VpnPicker {
         };
         choices.push(VpnChoice {
             interface: None,
-            label: "Enter an interface name...".into(),
+            label: "手动输入接口名…".into(),
         });
         Self {
             form,
@@ -402,20 +398,17 @@ impl VpnPicker {
 }
 
 const IP_CHOICES: [(&str, &str); 3] = [
-    ("", "Region only"),
-    ("auto", "Auto-pin (default)"),
-    ("manual", "Enter an IP address..."),
+    ("", "仅校验地区"),
+    ("auto", "自动固定（默认）"),
+    ("manual", "手动输入 IP…"),
 ];
 const INTERVAL_CHOICES: [(&str, &str); 6] = [
-    ("15", "15 sec"),
-    ("30", "30 sec"),
-    ("60", "60 sec"),
-    ("120", "120 sec"),
-    (
-        "auto",
-        "Auto (default, checks more often during heavy traffic)",
-    ),
-    ("manual", "Custom interval..."),
+    ("15", "15 秒"),
+    ("30", "30 秒"),
+    ("60", "60 秒"),
+    ("120", "120 秒"),
+    ("auto", "自动（默认，流量高时更频繁）"),
+    ("manual", "自定义秒数…"),
 ];
 
 struct ExitPicker {
@@ -692,31 +685,31 @@ impl HealthJob {
                 .lines()
                 .find_map(|line| line.strip_prefix("exit "))
                 .map_or_else(
-                    || "Exit check passed".into(),
-                    |result| format!("Exit {}", result.trim()),
+                    || "出口检查通过".into(),
+                    |result| format!("出口 {}", result.trim()),
                 );
             if output.lines().any(|line| line.starts_with("api-http ")) {
-                message.push_str(" · Claude API reachable");
+                message.push_str(" · Claude API 可连接");
             }
             Ok(Some((true, message)))
         } else {
             let error = String::from_utf8_lossy(&error);
             let message = if error.contains("(CN)") {
-                "Blocked: Mainland China exit detected"
+                "检测到中国大陆出口，已阻断"
             } else if error.contains("GeoIP exit IP mismatch") {
-                "Blocked: exit IP mismatch. Press L for details."
+                "固定 IP 不匹配，已阻断。按 L 查看实际值"
             } else if error.contains("automatic exit IP changed during learning") {
-                "Exit IP changed between probes. Use Region only if the exit IP rotates."
+                "探测 IP 不一致。若节点会轮换 IP，可改为仅校验地区"
             } else if error.contains("GeoIP exit country mismatch") {
-                "Blocked: exit region mismatch. Press L for details."
+                "出口地区不匹配，已阻断。按 L 查看实际值"
             } else if error.contains("explicit Claude subscription OAuth credential") {
-                "Blocked: custom API conflicts with subscription OAuth"
+                "自定义 API 与订阅 OAuth 冲突，已阻断"
             } else if error.contains("Claude API HTTPS probe failed") {
-                "Exit region matched, but the Claude API is unreachable. Check your VPN or proxy."
+                "出口地区通过，Claude API 不可达。请检查 VPN 或代理"
             } else if error.contains("timed out") {
-                "Check timed out. Check your network connection."
+                "检查超时，请确认网络连接"
             } else {
-                "Check failed. Verify the client path, VPN or proxy, and expected region."
+                "检查未通过，请确认客户端路径、VPN/代理与出口地区"
             };
             Ok(Some((false, message.into())))
         }
@@ -765,7 +758,7 @@ impl App {
         let (default_name, notice) = match profile::default_name(&directory, &names) {
             Ok(name) => (
                 name,
-                "Enter launches the selected profile. Press S to make it the CLI default.".into(),
+                "Enter 启动选中配置。按 S 可设为命令行启动的默认配置。".into(),
             ),
             Err(error) => (None, error.to_string()),
         };
@@ -820,16 +813,16 @@ impl App {
         let (name, value) = form.result()?;
         if let Some(original) = &form.original {
             profile::update(&self.directory, original, &value)?;
-            self.notice = "Profile saved.".into();
+            self.notice = "已保存配置。".into();
         } else {
             profile::save(&self.directory, &name, &value)?;
-            self.notice = "Profile created.".into();
+            self.notice = "已创建配置。".into();
         }
         self.reload(Some(&name))
     }
     fn error(&mut self, error: anyhow::Error) {
         journal::failure(&self.directory, self.selected_name(), "ui", &error);
-        self.notice = format!("Failed: {error}");
+        self.notice = format!("未完成：{error}");
     }
     fn poll_health(&mut self) {
         let completed = self.health.as_mut().and_then(|job| job.poll().transpose());
@@ -847,9 +840,7 @@ impl App {
                     });
                 }
                 _ => {
-                    self.notice =
-                        "Check interrupted or profile changed. Run a new check for this profile."
-                            .into();
+                    self.notice = "配置已变化或检查中断，旧探测结果未用于当前配置。".into();
                 }
             }
         }
@@ -887,14 +878,14 @@ impl App {
                             true,
                         )?)
                     } else {
-                        self.notice = "No profiles yet. Press N to create one.".into();
+                        self.notice = "还没有配置，按 N 新建。".into();
                         Mode::Home
                     }
                 }
                 KeyCode::Char('c' | 'C') => self
                     .selected_name()
                     .map(|name| Mode::Prompt {
-                        title: "Copy profile",
+                        title: "复制配置",
                         kind: PromptKind::Copy(name.into()),
                         text: format!("{name}-copy"),
                     })
@@ -912,7 +903,7 @@ impl App {
                     {
                         Mode::ResetExitIp(name.into())
                     } else {
-                        self.notice = "Auto-pin is disabled for this profile.".into();
+                        self.notice = "当前配置未启用自动固定出口。".into();
                         Mode::Home
                     }
                 }
@@ -932,14 +923,14 @@ impl App {
                     if let Some(name) = self.selected_name() {
                         profile::set_default(&self.directory, name)?;
                         self.default_name = Some(name.to_owned());
-                        self.notice = "Default profile saved. Run claude-wrapper start to launch it directly.".into();
+                        self.notice = "已设为默认。下次运行 claude-wrapper start 直接启动。".into();
                     } else {
-                        self.notice = "No profiles yet. Press N to create one.".into();
+                        self.notice = "还没有配置，按 N 新建。".into();
                     }
                     Mode::Home
                 }
                 KeyCode::Char('t' | 'T') => Mode::Prompt {
-                    title: "Claude path",
+                    title: "Claude 路径",
                     kind: PromptKind::Target,
                     text: self.target.clone(),
                 },
@@ -955,7 +946,7 @@ impl App {
                                 Err(error) => self.error(error),
                             }
                         } else {
-                            self.notice = "Create or select a valid profile first.".into();
+                            self.notice = "请先创建或选择有效配置。".into();
                         }
                     }
                     Mode::Home
@@ -968,10 +959,9 @@ impl App {
                                 target: target.into_os_string(),
                             }));
                         }
-                        self.notice =
-                            "Claude executable not found. Press T to set its path.".into();
+                        self.notice = "未找到 Claude 程序，按 T 指定真实可执行路径。".into();
                     } else {
-                        self.notice = "No profiles yet. Press N to create one.".into();
+                        self.notice = "还没有配置，按 N 新建。".into();
                     }
                     Mode::Home
                 }
@@ -1041,17 +1031,17 @@ impl App {
                             value.device_id = Some(profile::new_device_id()?);
                             profile::save(&self.directory, &text, &value)?;
                             self.reload(Some(&text))?;
-                            self.notice = "Profile copied with separate login and history.".into();
+                            self.notice = "已复制配置。新配置有独立的登录和历史。".into();
                             Ok(())
                         })(),
                         PromptKind::Target => {
                             if which::which(&text).is_ok() {
                                 self.target = which::which(&text)?.to_string_lossy().into_owned();
                                 self.invalidate_health();
-                                self.notice = "Claude path updated.".into();
+                                self.notice = "已更新 Claude 路径。".into();
                                 Ok(())
                             } else {
-                                Err(anyhow::anyhow!("Executable not found"))
+                                Err(anyhow::anyhow!("找不到可执行程序"))
                             }
                         }
                     };
@@ -1074,7 +1064,7 @@ impl App {
                         Ok(()) => {
                             self.reload(None)?;
                             self.notice =
-                                "Profile deleted. Claude login and history were kept. Use a new name to create another profile."
+                                "已删除配置；Claude 登录和历史状态已保留，重建请使用新名称。"
                                     .into();
                         }
                         Err(error) => self.error(error),
@@ -1088,8 +1078,7 @@ impl App {
                 KeyCode::Char('y' | 'Y') | KeyCode::Enter => {
                     self.invalidate_health();
                     profile::reset_exit_pin(&self.directory, &name)?;
-                    self.notice =
-                        "Pinned IP cleared. Launch again or press H to learn a new IP.".into();
+                    self.notice = "已重置自动出口。下次启动或按 H 时重新学习。".into();
                     Mode::Home
                 }
                 KeyCode::Esc | KeyCode::Char('n' | 'N') => Mode::Home,
@@ -1132,10 +1121,7 @@ impl App {
                             Ok(())
                         })();
                         match result {
-                            Ok(()) => {
-                                self.notice =
-                                    format!("Applied the {} preset.", ZONE_NAMES[selected])
-                            }
+                            Ok(()) => self.notice = format!("已应用{}预设。", ZONE_NAMES[selected]),
                             Err(error) => self.error(error),
                         }
                         Mode::Home
@@ -1167,9 +1153,7 @@ fn input_text(text: &mut String, key: KeyEvent) {
 fn safe_proxy(value: &str) -> String {
     crate::proxy::parse_proxy(value, false)
         .map(|url| url.to_string())
-        .unwrap_or_else(|_| {
-            "[Invalid or contains credentials. Use a proxy environment variable.]".into()
-        })
+        .unwrap_or_else(|_| "[无效或含认证；请使用代理环境变量]".into())
 }
 // Rendering only: keep full values in state and when editing.
 fn single_line_tail(value: &str, width: usize) -> String {
@@ -1207,7 +1191,7 @@ fn popup(area: Rect, width: u16, height: u16) -> Rect {
 
 fn vpn_name(interface: &str) -> &str {
     if interface == "auto" {
-        "Auto-select"
+        "自动选择"
     } else {
         interface
     }
@@ -1218,16 +1202,16 @@ fn render_vpn_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &V
         let rect = popup(area, 66, 8);
         frame.render_widget(Clear, rect);
         let lines = vec![
-            Line::from("Enter a system interface name, such as utun6."),
+            Line::from("输入系统接口名称，例如 utun6。"),
             Line::from(""),
             Line::from(single_line_tail(
                 &format!("{input}▏"),
                 rect.width.saturating_sub(2) as usize,
             )),
-            Line::from("Ctrl+A Clear · Enter Apply · Esc Back to list"),
+            Line::from("Ctrl+A 清空 · Enter 应用 · Esc 返回列表"),
         ];
         frame.render_widget(
-            Paragraph::new(lines).block(theme.block(" Enter VPN interface ")),
+            Paragraph::new(lines).block(theme.block(" 手动输入接口 ")),
             rect,
         );
         return;
@@ -1235,7 +1219,7 @@ fn render_vpn_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &V
 
     let rect = popup(area, 68, 15);
     frame.render_widget(Clear, rect);
-    let block = theme.block(" Select VPN interface ");
+    let block = theme.block(" 选择 VPN 接口 ");
     let inner = block.inner(rect);
     frame.render_widget(block, rect);
     let rows = Layout::vertical([
@@ -1267,7 +1251,7 @@ fn render_vpn_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &V
         &mut state,
     );
     frame.render_widget(
-        Paragraph::new("↑/↓ Select · Enter Apply · Esc Back to form")
+        Paragraph::new("↑/↓ 选择 · Enter 应用 · Esc 返回表单")
             .style(Style::default().fg(theme.orange)),
         rows[2],
     );
@@ -1281,7 +1265,7 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
         let (hint, color) = if interval {
             (
                 format!(
-                    "Enter a whole number from {} to {} seconds.",
+                    "请输入 {}–{} 秒之间的整数。",
                     profile::MIN_EXIT_CHECK_INTERVAL,
                     profile::MAX_EXIT_CHECK_INTERVAL
                 ),
@@ -1292,13 +1276,10 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
                 },
             )
         } else if picker.invalid_input {
-            (
-                "Invalid address. Enter an IPv4 or IPv6 address.".into(),
-                theme.red,
-            )
+            ("地址格式无效。请输入 IPv4 或 IPv6。".into(), theme.red)
         } else {
             (
-                "Enter or paste the expected public IPv4 or IPv6 address.".into(),
+                "输入或粘贴预期的公网 IPv4 / IPv6 地址。".into(),
                 theme.muted,
             )
         };
@@ -1309,12 +1290,12 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
                     rect.width.saturating_sub(2) as usize,
                 )),
                 Line::from(Span::styled(hint, Style::default().fg(color))),
-                Line::from("Ctrl+A Clear · Enter Apply · Esc Back"),
+                Line::from("Ctrl+A 清空 · Enter 应用 · Esc 返回"),
             ])
             .block(theme.block(if interval {
-                " Custom check interval "
+                " 自定义检查间隔 "
             } else {
-                " Enter exit IP "
+                " 手动输入出口 IP "
             })),
             rect,
         );
@@ -1335,11 +1316,11 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
     );
     frame.render_widget(Clear, rect);
     let title = if region {
-        " Select exit region "
+        " 选择出口地区 "
     } else if interval {
-        " Select check interval "
+        " 选择出口复查间隔 "
     } else {
-        " Select exit IP policy "
+        " 选择固定出口方式 "
     };
     let block = theme.block(title);
     let rows = Layout::vertical([
@@ -1350,11 +1331,11 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
     .split(block.inner(rect));
     frame.render_widget(block, rect);
     let hint = if region {
-        format!("Search by code or name  {}▏", picker.search)
+        format!("搜索代码或名称  {}▏", picker.search)
     } else if interval {
-        "Checks during managed VPN or proxy sessions".into()
+        "用于托管 VPN 或代理的运行中复查".into()
     } else {
-        "Choose how to verify the exit IP".into()
+        "选择如何校验本次出口的 IP".into()
     };
     frame.render_widget(
         Paragraph::new(single_line_tail(&hint, rows[0].width as usize))
@@ -1364,7 +1345,7 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
     let options = picker.options();
     if options.is_empty() {
         frame.render_widget(
-            Paragraph::new("No matching region. Use Backspace or Ctrl+A to clear the search."),
+            Paragraph::new("没有匹配地区。退格或 Ctrl+A 清空搜索。"),
             rows[1],
         );
     } else {
@@ -1384,8 +1365,7 @@ fn render_exit_picker(frame: &mut Frame<'_>, area: Rect, theme: Theme, picker: &
         frame.render_stateful_widget(list, rows[1], &mut state);
     }
     frame.render_widget(
-        Paragraph::new("↑/↓ Select · Enter Apply · Esc Back")
-            .style(Style::default().fg(theme.muted)),
+        Paragraph::new("↑/↓ 选择 · Enter 应用 · Esc 返回").style(Style::default().fg(theme.muted)),
         rows[2],
     );
 }
@@ -1485,7 +1465,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     frame.render_widget(Block::default().style(t.text()), area);
     if area.width < 60 || area.height < 18 {
         frame.render_widget(
-            Paragraph::new("Resize to at least 60 x 18. Ctrl+C quits.").style(t.text()),
+            Paragraph::new("窗口较小，请放大到至少 60×18。Ctrl+C 退出").style(t.text()),
             area,
         );
         return;
@@ -1506,10 +1486,10 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         Paragraph::new(Line::from(vec![
             Span::styled(format!(" {pulse} "), Style::default().fg(t.orange)),
             Span::styled(
-                "Claude Wrapper",
+                "Claude 环境工作台",
                 Style::default().fg(t.text).add_modifier(Modifier::BOLD),
             ),
-            Span::styled("  /  Profiles / Exit checks", Style::default().fg(t.muted)),
+            Span::styled("  /  配置 · 出口校验", Style::default().fg(t.muted)),
         ]))
         .block(t.block(" CLAUDE WRAPPER ")),
         rows[0],
@@ -1536,7 +1516,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     }
     frame.render_stateful_widget(
         List::new(items)
-            .block(t.block(" Profiles (* default) "))
+            .block(t.block(" 配置 · ★ 默认 "))
             .highlight_symbol("› ")
             .highlight_style(Style::default().fg(t.orange).add_modifier(Modifier::BOLD)),
         columns[0],
@@ -1548,60 +1528,60 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             && value.validate().is_ok()
         {
             detail.extend([
-                Line::from(format!("Time zone  {}", value.timezone)),
-                Line::from(format!("Locale  {}", value.locale)),
+                Line::from(format!("时区  {}", value.timezone)),
+                Line::from(format!("区域  {}", value.locale)),
             ]);
             let network = if let Some(vpn) = value.vpn_interface.as_deref() {
                 format!("VPN · {}", vpn_name(vpn))
             } else if let Some(variable) = value.proxy_env.as_deref() {
-                format!("Proxy environment variable · {variable}")
+                format!("代理环境变量 · {variable}")
             } else {
                 value
                     .proxy_url
                     .as_deref()
                     .map(safe_proxy)
-                    .unwrap_or_else(|| "Not set".into())
+                    .unwrap_or_else(|| "尚未设置".into())
             };
-            detail.push(Line::from(format!("Network  {network}")));
+            detail.push(Line::from(format!("网络  {network}")));
             detail.push(Line::from(format!(
-                "Expected exit region  {}",
+                "预期出口地区  {}",
                 value.exit_country()
             )));
             let interval = value.exit_check_interval();
             let interval_label = if interval.is_auto() {
                 format!(
-                    "Auto (about {}-{} sec)",
+                    "自动（约 {}–{} 秒）",
                     profile::AUTO_MIN_SECONDS,
                     profile::AUTO_IDLE_SECONDS
                 )
             } else {
-                format!("{interval} sec")
+                format!("{interval} 秒")
             };
-            detail.push(Line::from(format!("Check interval  {interval_label}")));
+            detail.push(Line::from(format!("出口复查  {interval_label}")));
             match value.expected_exit_ip {
-                Some(ExitIp::Fixed(ip)) => detail.push(Line::from(format!("Pinned exit  {ip}"))),
+                Some(ExitIp::Fixed(ip)) => detail.push(Line::from(format!("固定出口  {ip}"))),
                 Some(ExitIp::Auto) => {
                     let pin = profile::exit_pin_path(&app.directory, name)
                         .and_then(|path| crate::exit_pin::read(&path));
                     let status = match pin {
-                        Ok(Some(ip)) => format!("Pinned {ip}"),
-                        Ok(None) => "Pending".into(),
-                        Err(_) => "Unreadable. Press R to reset.".into(),
+                        Ok(Some(ip)) => format!("已锁定 {ip}"),
+                        Ok(None) => "待学习".into(),
+                        Err(_) => "无法读取，按 R 重置".into(),
                     };
-                    detail.push(Line::from(format!("Auto-pinned IP  {status}")));
+                    detail.push(Line::from(format!("自动出口  {status}")));
                 }
                 None => {}
             }
         } else {
-            detail.push(Line::from("Invalid profile. Check the profile file."));
+            detail.push(Line::from("配置无效或无法读取，请检查配置文件。"));
         }
     } else {
         detail.extend([
-            Line::from("No profiles yet."),
-            Line::from("N creates a profile. P opens US presets."),
+            Line::from("还没有配置。"),
+            Line::from("N 新建，或 P 从美国预设开始。"),
         ]);
     }
-    let detail_block = t.block(" Profile details ");
+    let detail_block = t.block(" 配置详情 ");
     let inner = detail_block.inner(columns[1]);
     frame.render_widget(detail_block, columns[1]);
     let detail_rows = Layout::vertical([
@@ -1618,7 +1598,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     let width = inner.width as usize;
     frame.render_widget(
         Paragraph::new(format!(
-            "Directory  {}",
+            "当前目录  {}",
             single_line_tail(&app.working_dir.to_string_lossy(), width.saturating_sub(10))
         ))
         .style(Style::default().fg(t.muted)),
@@ -1626,7 +1606,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     );
     frame.render_widget(
         Paragraph::new(format!(
-            "Client  {}",
+            "程序  {}",
             single_line_tail(&app.target, width.saturating_sub(6))
         ))
         .style(Style::default().fg(t.muted)),
@@ -1636,7 +1616,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         let icons = ["⠋", "⠙", "⠹", "⠸"];
         Line::from(Span::styled(
             format!(
-                "{} Current check · {}",
+                "{} 本次探测 · {}",
                 if app.animate {
                     icons[app.tick % 4]
                 } else {
@@ -1651,7 +1631,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     {
         Line::from(Span::styled(
             format!(
-                "Last check · {} · {}",
+                "最近探测 · {} · {}",
                 single_line_tail(&record.name, 12),
                 record.message
             ),
@@ -1659,7 +1639,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         ))
     } else {
         Line::from(Span::styled(
-            "No exit check yet - H to check",
+            "尚未检查当前配置 · H 检查",
             Style::default().fg(t.muted),
         ))
     };
@@ -1675,10 +1655,10 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     );
     frame.render_widget(
         Paragraph::new(vec![
-            Line::from(" N New E Edit C Copy D Del P Presets S Default T Client"),
+            Line::from(" N 新建  E 编辑  C 复制  D 删除  P 预设  S 设默认  T 程序"),
             Line::from(format!(
-                " H Check R Reset L Logs Enter Run ? Help A Anim {} Q Quit",
-                if app.animate { "On" } else { "Off" }
+                " H 检查  R 重置出口  L 日志  Enter 启动  ? 帮助  A 动画{}  Q 退出",
+                if app.animate { "开" } else { "关" }
             )),
         ])
         .style(Style::default().fg(t.orange)),
@@ -1691,7 +1671,7 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             let rect = popup(area, 88, 20);
             frame.render_widget(Clear, rect);
             let mut lines = vec![
-                Line::from("↑/↓ Switch fields · Ctrl+A Clear · ←/→ Network · Ctrl+P Presets"),
+                Line::from("↑/↓ 切字段 · Ctrl+A 清空 · ←/→ 网络 · Ctrl+P 预设"),
                 Line::from(""),
             ];
             for (index, label) in LABELS.iter().enumerate() {
@@ -1699,31 +1679,31 @@ fn render(frame: &mut Frame<'_>, app: &App) {
                     format!("‹ {} ›", NETWORKS[form.network])
                 } else if index == VPN_INTERFACE_FIELD {
                     if form.network == VPN_NETWORK {
-                        format!("‹ {} · Enter Select ›", vpn_name(&form.fields[index]))
+                        format!("‹ {} · Enter 选择 ›", vpn_name(&form.fields[index]))
                     } else {
-                        "Available in VPN mode".into()
+                        "仅在 VPN 模式使用".into()
                     }
                 } else if index == EXIT_IP_FIELD {
                     let mode = match form.fields[index].as_str() {
-                        "" => "Region only",
-                        "auto" => "Auto-pin",
+                        "" => "仅校验地区",
+                        "auto" => "自动固定",
                         ip => ip,
                     };
-                    format!("‹ {mode} · Enter Select ›")
+                    format!("‹ {mode} · Enter 选择 ›")
                 } else if index == EXIT_COUNTRY_FIELD {
                     let code = form.fields[index].as_str();
-                    let name = crate::exit_regions::name(code).unwrap_or("Unknown region");
-                    format!("‹ {code} {name} · Enter Select ›")
+                    let name = crate::exit_regions::name(code).unwrap_or("未知地区");
+                    format!("‹ {code} {name} · Enter 选择 ›")
                 } else if index == EXIT_INTERVAL_FIELD {
                     let interval = &form.fields[index];
                     if interval == "auto" {
                         format!(
-                            "‹ Auto (about {}-{} sec) · Enter Select ›",
+                            "‹ 自动（约 {}–{} 秒） · Enter 选择 ›",
                             profile::AUTO_MIN_SECONDS,
                             profile::AUTO_IDLE_SECONDS
                         )
                     } else {
-                        format!("‹ {interval} sec · Enter Select ›")
+                        format!("‹ {interval} 秒 · Enter 选择 ›")
                     }
                 } else if index == PROXY_URL_FIELD && !form.fields[index].is_empty() {
                     if form.focus == PROXY_URL_FIELD {
@@ -1758,23 +1738,23 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             }
             lines.extend([
                 Line::from(""),
-                Line::from("Press Enter on the VPN interface, region, IP, or interval field."),
-                Line::from("The proxy address is hidden while editing. Move to another field to reveal it."),
+                Line::from("在 VPN 接口、出口地区、IP 或复查间隔行按 Enter 选择。"),
+                Line::from("代理地址编辑时隐藏，移到其他字段即可查看。"),
                 Line::from(Span::styled(
                     app.notice.as_str(),
-                    Style::default().fg(if app.notice.starts_with("Failed") {
+                    Style::default().fg(if app.notice.starts_with("未完成") {
                         t.red
                     } else {
                         t.muted
                     }),
                 )),
-                Line::from("Ctrl+S Save · Esc Discard"),
+                Line::from("Ctrl+S 保存 · Esc 返回（不保存）"),
             ]);
             frame.render_widget(
                 Paragraph::new(lines).block(t.block(if form.original.is_some() {
-                    " Edit profile "
+                    " 编辑配置 "
                 } else {
-                    " New profile "
+                    " 新建配置 "
                 })),
                 rect,
             );
@@ -1786,14 +1766,14 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             frame.render_widget(Clear, rect);
             frame.render_widget(
                 Paragraph::new(vec![
-                    Line::from("Ctrl+A clears the field. Enter the path without quotes."),
+                    Line::from("Ctrl+A 清空后输入；路径直接输入，不加引号。"),
                     Line::from(""),
                     Line::from(single_line_tail(
                         &format!("{text}▏"),
                         rect.width.saturating_sub(2) as usize,
                     )),
                     Line::from(app.notice.as_str()),
-                    Line::from("Enter Confirm · Esc Back"),
+                    Line::from("Enter 确认 · Esc 返回"),
                 ])
                 .wrap(Wrap { trim: false })
                 .block(t.block(title)),
@@ -1805,13 +1785,13 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             frame.render_widget(Clear, rect);
             frame.render_widget(
                 Paragraph::new(vec![
-                    Line::from(format!("Delete profile {name}?")),
-                    Line::from("Claude login, history, and project files are kept."),
-                    Line::from("Use a new name when creating another profile."),
+                    Line::from(format!("删除配置 {name}？")),
+                    Line::from("Claude 登录/历史状态会保留，不删除项目文件。"),
+                    Line::from("再次创建身份需使用新配置名称。"),
                     Line::from(""),
-                    Line::from("Y / Enter Delete · N / Esc Cancel"),
+                    Line::from("Y / Enter 确认删除 · N / Esc 取消"),
                 ])
-                .block(t.block(" Delete profile ")),
+                .block(t.block(" 删除配置 ")),
                 rect,
             );
         }
@@ -1820,21 +1800,18 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             frame.render_widget(Clear, rect);
             frame.render_widget(
                 Paragraph::new(vec![
-                    Line::from(format!("Clear the pinned exit IP for {name}?")),
-                    Line::from("On launch or H, three matching probes pin the exit IP again."),
-                    Line::from("Y / Enter Confirm · Esc Cancel"),
+                    Line::from(format!("清除 {name} 已锁定的出口 IP？")),
+                    Line::from("下次启动或按 H 时，三次探测一致后重新锁定。"),
+                    Line::from("Y / Enter 确认 · Esc 取消"),
                 ])
-                .block(t.block(" Reset pinned exit IP ")),
+                .block(t.block(" 重置自动出口 ")),
                 rect,
             );
         }
         Mode::Preset { selected, .. } => {
             let rect = popup(area, 68, 10);
             frame.render_widget(Clear, rect);
-            let mut lines = vec![
-                Line::from("Apply the selected time zone and locale."),
-                Line::from(""),
-            ];
+            let mut lines = vec![Line::from("应用所选时区与区域。"), Line::from("")];
             for (index, name) in ZONE_NAMES.iter().enumerate() {
                 lines.push(Line::from(Span::styled(
                     format!("{} {name}", if index == *selected { "›" } else { " " }),
@@ -1843,14 +1820,14 @@ fn render(frame: &mut Frame<'_>, app: &App) {
             }
             lines.extend([
                 Line::from(""),
-                Line::from("↑/↓ Select · Enter Apply · Esc Back"),
+                Line::from("↑/↓ 选择 · Enter 应用 · Esc 返回"),
             ]);
-            frame.render_widget(Paragraph::new(lines).block(t.block(" US presets ")), rect);
+            frame.render_widget(Paragraph::new(lines).block(t.block(" 美国预设 ")), rect);
         }
         Mode::Help => {
             let rect = popup(area, 82, 19);
             frame.render_widget(Clear, rect);
-            frame.render_widget(Paragraph::new("Up/Down Select a profile. Enter Launch.\nS Set default for claude-wrapper start.\nN New · E Edit · C Copy · D Delete\nP Open US presets. In the editor, use Ctrl+P.\nT Set the Claude executable.\nH Check exit · R Reset pinned IP · L Browse logs\nPress H to recheck after editing a profile.\nUp/Down Switch fields. Ctrl+A Clear. Ctrl+S Save.\nEnter opens VPN and exit options.\nA Toggle motion. Use ui --no-animation or CLAUDE_WRAPPER_REDUCED_MOTION to reduce motion.\nNO_COLOR disables colors. Ctrl+C or Q quits.\nPress any key to return.").wrap(Wrap{trim:false}).block(t.block(" Help ")),rect);
+            frame.render_widget(Paragraph::new("↑/↓ 选择已有配置，Enter 启动选中配置\nS 设为默认，之后可用 claude-wrapper start 直接启动\nN 新建 · E 编辑 · C 复制 · D 删除配置\nP 美国西/中/东预设；表单中用 Ctrl+P\nT 指定 Claude 程序\nH 检查出口 · R 重置自动出口 · L 分类日志\n修改配置后可按 H 重新检查\n↑/↓ 切字段，Ctrl+A 清空，Ctrl+S 保存\nVPN 接口及出口字段按 Enter 打开列表\nA 切换动画；ui --no-animation / CLAUDE_WRAPPER_REDUCED_MOTION 可减动\nNO_COLOR 关闭颜色；Ctrl+C / Q 退出\n任意键返回").wrap(Wrap{trim:false}).block(t.block(" 帮助 ")),rect);
         }
     }
 }
@@ -1975,7 +1952,7 @@ mod tests {
             .iter()
             .map(|cell| cell.symbol())
             .collect::<String>();
-        assert!(text.replace(' ', "").contains("Invalidprofile"));
+        assert!(text.replace(' ', "").contains("配置无效或无法读取"));
     }
     #[test]
     fn narrow_screen_keeps_health_visible_with_long_unicode_paths() {
@@ -1992,7 +1969,7 @@ mod tests {
             .iter()
             .map(|cell| cell.symbol())
             .collect::<String>();
-        assert!(text.replace(' ', "").contains("Noexitcheckyet"));
+        assert!(text.replace(' ', "").contains("尚未检查当前配置"));
         assert!(!text.contains(&app.target));
         let shortened = single_line_tail("abc😀😀😀/文件名", 10);
         assert!(Span::raw(&shortened).width() <= 10);
@@ -2033,9 +2010,9 @@ mod tests {
             .map(|cell| cell.symbol())
             .collect::<String>()
             .replace(' ', "");
-        assert!(text.contains("Auto-select(auto)"));
-        assert!(text.contains("utun6·Active"));
-        assert!(text.contains("utun90·Configured,inactive"));
+        assert!(text.contains("自动选择（auto）"));
+        assert!(text.contains("utun6·活动接口"));
+        assert!(text.contains("utun90·当前配置，未检测到此接口"));
 
         let press = |code| KeyEvent::new(code, KeyModifiers::NONE);
         app.key(press(KeyCode::Up)).unwrap();
