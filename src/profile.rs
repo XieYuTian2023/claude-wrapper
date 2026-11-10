@@ -425,16 +425,16 @@ pub fn default_name(dir: &Path, names: &[String]) -> Result<Option<String>> {
                 _ => None,
             });
         }
-        Err(error) => return Err(error).context("无法读取默认配置"),
+        Err(error) => return Err(error).context("Could not read the default profile"),
     };
     let name = name.trim();
     ensure!(
         valid_name(name),
-        "默认配置无效，请打开 claude-wrapper ui 并按 S 重新设置"
+        "Invalid default profile. Open claude-wrapper ui and press S to set it again."
     );
     ensure!(
         names.iter().any(|candidate| candidate == name),
-        "默认配置 {name} 已不存在，请打开 claude-wrapper ui 并按 S 重设"
+        "Default profile {name} is missing. Open claude-wrapper ui and press S to set a new default."
     );
     Ok(Some(name.to_owned()))
 }
@@ -446,7 +446,7 @@ pub fn set_default(dir: &Path, name: &str) -> Result<()> {
     temp.as_file().sync_all()?;
     temp.persist(dir.join(DEFAULT_PROFILE_FILE))
         .map_err(|error| error.error)
-        .context("无法保存默认配置")?;
+        .context("Could not save the default profile")?;
     Ok(())
 }
 
@@ -456,9 +456,11 @@ pub fn startup_name(dir: &Path) -> Result<String> {
         return Ok(name);
     }
     if names.is_empty() {
-        bail!("还没有配置，请打开 claude-wrapper ui 并按 N 新建");
+        bail!("No profiles yet. Open claude-wrapper ui and press N to create one.");
     }
-    bail!("有多个配置，请打开 claude-wrapper ui，选中一个并按 S 设为默认")
+    bail!(
+        "Multiple profiles found. Open claude-wrapper ui, select one, and press S to set it as the default."
+    )
 }
 
 pub fn delete(dir: &Path, name: &str) -> Result<()> {

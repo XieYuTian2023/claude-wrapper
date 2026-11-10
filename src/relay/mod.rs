@@ -526,7 +526,7 @@ async fn launch(
     notice::emit(
         Level::Exit,
         format_args!(
-            "出口检查通过 · {} ({country}){interface}",
+            "Exit check passed · {} ({country}){interface}",
             preflight.exit_ip
         ),
     );

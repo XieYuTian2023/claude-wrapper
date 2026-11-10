@@ -201,7 +201,7 @@ fn failed_connect_probe_prevents_target_start_even_with_inherited_no_proxy() {
     assert!(
         stderr
             .lines()
-            .any(|line| line.starts_with("[Wrapper/错误]: ")),
+            .any(|line| line.starts_with("[Wrapper/Error]: ")),
         "{stderr}"
     );
     assert!(!stderr.contains('\x1b'), "{stderr}");

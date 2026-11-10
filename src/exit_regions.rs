@@ -1,18 +1,18 @@
 //! ISO codes and display names from the public-domain IANA tzdb table.
 const COMMON: &[(&str, &str)] = &[
-    ("US", "美国 / United States"),
-    ("JP", "日本 / Japan"),
-    ("CA", "加拿大 / Canada"),
-    ("GB", "英国 / United Kingdom"),
-    ("DE", "德国 / Germany"),
-    ("SG", "新加坡 / Singapore"),
-    ("AU", "澳大利亚 / Australia"),
-    ("FR", "法国 / France"),
-    ("NL", "荷兰 / Netherlands"),
-    ("CH", "瑞士 / Switzerland"),
-    ("KR", "韩国 / South Korea"),
-    ("TW", "台湾 / Taiwan"),
-    ("HK", "香港 / Hong Kong"),
+    ("US", "United States"),
+    ("JP", "Japan"),
+    ("CA", "Canada"),
+    ("GB", "United Kingdom"),
+    ("DE", "Germany"),
+    ("SG", "Singapore"),
+    ("AU", "Australia"),
+    ("FR", "France"),
+    ("NL", "Netherlands"),
+    ("CH", "Switzerland"),
+    ("KR", "South Korea"),
+    ("TW", "Taiwan"),
+    ("HK", "Hong Kong"),
 ];
 
 pub fn choices() -> impl Iterator<Item = (&'static str, &'static str)> {

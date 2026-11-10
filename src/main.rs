@@ -316,7 +316,7 @@ impl Plan {
             notice::emit(
                 notice::Level::Warning,
                 format_args!(
-                    "检测到多项 Claude 鉴权设置（{}），请确认客户端使用的凭据",
+                    "Multiple Claude authentication settings detected ({}). Check which credentials the client uses.",
                     active.join(", ")
                 ),
             );
@@ -773,7 +773,7 @@ fn manage(dir: &Path, action: ProfileAction) -> Result<()> {
         ProfileAction::Delete { name } => profile::delete(dir, &name)?,
         ProfileAction::ResetExitIp { name } => {
             profile::reset_exit_pin(dir, &name)?;
-            println!("已清除 {name} 的自动出口 IP");
+            println!("Cleared the pinned exit IP for {name}");
         }
     }
     Ok(())
@@ -793,7 +793,9 @@ fn dispatch(cli: Cli) -> Result<i32> {
     if matches!(&cli.action, None | Some(Action::Ui { .. }))
         && (!io::stdin().is_terminal() || !io::stdout().is_terminal())
     {
-        println!("交互界面需要真实终端。也可使用 profile、doctor、run 命令。\n");
+        println!(
+            "The interactive UI requires a terminal. You can also use profile, doctor, or run.\n"
+        );
         Cli::command().print_help()?;
         println!();
         return Ok(0);
@@ -905,12 +907,14 @@ fn dispatch(cli: Cli) -> Result<i32> {
                 let ip = proxy::check(proxy, exit)?;
                 notice::emit(
                     notice::Level::Exit,
-                    format_args!("出口检查通过 · {ip} ({})", exit.country),
+                    format_args!("Exit check passed · {ip} ({})", exit.country),
                 );
                 if matches!(plan.network, Network::ProxyEnv) {
                     notice::emit(
                         notice::Level::Warning,
-                        format_args!("环境变量代理模式允许忽略代理的程序直连"),
+                        format_args!(
+                            "Programs that ignore proxy environment variables can connect directly"
+                        ),
                     );
                 }
                 let command = plan.command(args, proxy)?;

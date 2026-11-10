@@ -4,9 +4,9 @@ set -eu
 
 cw_fail() {
     if [ -t 2 ] && [ "${NO_COLOR+x}" != x ] && [ "${TERM-}" != dumb ]; then
-        printf '\033[1;31m[Wrapper/错误]\033[0m: %s\n' "$1" >&2
+        printf '\033[1;31m[Wrapper/Error]\033[0m: %s\n' "$1" >&2
     else
-        printf '[Wrapper/错误]: %s\n' "$1" >&2
+        printf '[Wrapper/Error]: %s\n' "$1" >&2
     fi
     exit 1
 }

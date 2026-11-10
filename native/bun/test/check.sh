@@ -47,7 +47,7 @@ if env HOME="$work/home" CLAUDE_CONFIG_DIR="$work/config" \
   exit 1
 fi
 [ ! -s "$work/rejected" ]
-rg -Fq '[Wrapper/错误]: 客户端兼容设置初始化失败' "$work/rejected-log"
+rg -Fq '[Wrapper/Error]: Could not initialize client compatibility settings' "$work/rejected-log"
 if env -i PATH=/usr/bin:/bin HOME="$work/home" CLAUDE_CONFIG_DIR="$work/config" \
   CLAUDE_WRAPPER_DEVICE_ID=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
   ANTHROPIC_BASE_URL=https://gateway.invalid CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR=99 \
@@ -58,5 +58,5 @@ if env -i PATH=/usr/bin:/bin HOME="$work/home" CLAUDE_CONFIG_DIR="$work/config" 
   exit 1
 fi
 [ ! -s "$work/oauth" ]
-rg -Fq '[Wrapper/错误]: 客户端兼容设置初始化失败' "$work/oauth-log"
+rg -Fq '[Wrapper/Error]: Could not initialize client compatibility settings' "$work/oauth-log"
 printf '%s\n' 'Actual Claude Code Bun identity contract passed'

@@ -12,10 +12,10 @@ pub enum Level {
 
 pub fn emit(level: Level, message: fmt::Arguments<'_>) {
     let (label, color) = match level {
-        Level::Exit => ("出口", 32),
-        Level::Warning => ("提示", 33),
-        Level::Blocked => ("拦截", 31),
-        Level::Error => ("错误", 31),
+        Level::Exit => ("Exit", 32),
+        Level::Warning => ("Warning", 33),
+        Level::Blocked => ("Blocked", 31),
+        Level::Error => ("Error", 31),
     };
     if io::stderr().is_terminal()
         && env::var_os("NO_COLOR").is_none()

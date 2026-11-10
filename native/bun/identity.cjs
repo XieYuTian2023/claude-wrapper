@@ -9,8 +9,8 @@ function notice(type, color, message) {
   process.stderr.write(`${useColor ? `\x1b[1;${color}m${label}\x1b[0m` : label}: ${message}\n`);
 }
 
-function fail(message = "客户端兼容设置初始化失败") {
-  notice("错误", 31, message);
+function fail(message = "Could not initialize client compatibility settings") {
+  notice("Error", 31, message);
   process.exit(126);
 }
 
@@ -52,7 +52,7 @@ try {
   });
   const activation = native.symbols.claude_wrapper_activate();
   if (activation !== 0 || native.symbols.claude_wrapper_self_test() !== 224) {
-    fail(`客户端兼容设置初始化失败（${activation}）`);
+    fail(`Could not initialize client compatibility settings (${activation})`);
   }
   const status = Buffer.alloc(160);
   if (native.symbols.claude_wrapper_get_status(status, 160n) !== 0) fail();
@@ -151,11 +151,11 @@ try {
       });
     }
   } else if (process.env.CLAUDE_WRAPPER_DIAGNOSTICS === "1") {
-    notice("兼容性", 33, "当前 Claude 运行时不支持锁定部分原始环境变量入口");
+    notice("Compatibility", 33, "This Claude runtime cannot lock some original environment variable aliases");
   }
   function checkChange(key, value) {
     if (protectedValues.has(key) && value !== protectedValues.get(key)) {
-      notice("拦截", 31, `客户端设置尝试修改受 Profile 管理的变量 ${key}`);
+      notice("Blocked", 31, `Client settings attempted to change a profile-managed variable ${key}`);
       process.exit(126);
     }
   }

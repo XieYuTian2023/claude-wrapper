@@ -61,7 +61,7 @@ def main():
         checks["npm_global_bin_symlink"] = True
         result = subprocess.run([str(shortcut), "--version"], env=env, capture_output=True,
                                 text=True, timeout=15)
-        assert result.returncode != 0 and "还没有配置" in result.stderr and not result.stdout
+        assert result.returncode != 0 and "No profiles yet" in result.stderr and not result.stdout
         checks["short_command_uses_direct_start"] = True
         package = prefix / "lib/node_modules" / package_name
         metadata = json.loads((package / "package.json").read_text())

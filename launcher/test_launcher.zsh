@@ -101,12 +101,12 @@ expect_argv --profiles-dir "$home_dir/Library/Application Support/claude-wrapper
 case_env=("CLAUDE_WRAPPER_CLIENT=$client" "CLAUDE_WRAPPER_PROFILES_DIR=$profiles_dir" 'STUB_PROFILES=')
 run_case no_profiles 1 '' east "$project"
 expect_no_launch
-[[ "$(< "$workdir/output")" == *尚无身份配置* ]] || fail_test 'missing profile explanation'
+[[ "$(< "$workdir/output")" == *"No profiles yet"* ]] || fail_test 'missing profile explanation'
 
 case_env=("CLAUDE_WRAPPER_CLIENT=$workdir/missing-client" "CLAUDE_WRAPPER_PROFILES_DIR=$profiles_dir")
 run_case missing_client 1 '' east "$project"
 expect_no_launch
-[[ "$(< "$workdir/output")" == *客户端文件不存在或不可执行* ]] || fail_test 'missing client explanation'
+[[ "$(< "$workdir/output")" == *"Claude executable is missing or cannot run"* ]] || fail_test 'missing client explanation'
 
 case_env=("CLAUDE_WRAPPER_CLIENT=$client" "CLAUDE_WRAPPER_PROFILES_DIR=$profiles_dir")
 run_case missing_project 1 '' east "$workdir/missing-project"
@@ -126,7 +126,7 @@ expect_no_launch
 case_env=("CLAUDE_WRAPPER_PROFILES_DIR=$profiles_dir" 'PATH=/usr/bin:/bin')
 run_case missing_default_client 1 '' east "$project"
 expect_no_launch
-[[ "$(< "$workdir/output")" == *未找到\ Claude\ 客户端* ]] || fail_test 'default client explanation'
+[[ "$(< "$workdir/output")" == *Claude\ executable\ not\ found* ]] || fail_test 'default client explanation'
 
 case_env=("CLAUDE_WRAPPER_CLIENT=$client" 'CLAUDE_WRAPPER_PROFILES_DIR=relative-directory')
 run_case relative_profile_directory 1 '' east "$project"

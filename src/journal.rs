@@ -31,9 +31,9 @@ pub enum Category {
 impl Category {
     pub fn label(self) -> &'static str {
         match self {
-            Self::Block => "拦截",
-            Self::Error => "错误",
-            Self::Exit => "出口",
+            Self::Block => "Blocked",
+            Self::Error => "Error",
+            Self::Exit => "Exit",
         }
     }
 }
@@ -67,24 +67,26 @@ impl Event {
     pub fn summary(&self) -> String {
         match self {
             Self::CountryBlocked { observed, .. } if observed == "CN" => {
-                "地区 · 检测到中国大陆出口（CN）".into()
+                "Region - Mainland China exit detected (CN)".into()
             }
             Self::CountryBlocked { observed, expected } => {
-                format!("地区 · 预期 {expected}，观察到 {observed}")
+                format!("Region - expected {expected}, observed {observed}")
             }
             Self::IpBlocked { observed, expected } => {
-                format!("IP · 预期 {expected}，观察到 {observed}")
+                format!("IP - expected {expected}, observed {observed}")
             }
             Self::UnstableIp { first, observed } => {
-                format!("自动固定 · 首次 {first}，随后 {observed}")
+                format!("Auto-pin - first saw {first}, then {observed}")
             }
-            Self::CredentialBlocked => "鉴权 · 订阅 OAuth 与自定义 API 冲突".into(),
-            Self::ApiUnavailable => "网络 · Claude API HTTPS 预检失败".into(),
-            Self::ProbeFailed => "网络 · 出口探测失败".into(),
-            Self::ClientExit(code) => format!("客户端退出 · 状态 {code}"),
-            Self::OperationFailed => "操作失败 · 详情见当次终端输出".into(),
-            Self::Pinned(ip) => format!("自动固定 · 已锁定 {ip}"),
-            Self::ResetPin => "自动固定 · 已清除，等待重新探测".into(),
+            Self::CredentialBlocked => {
+                "Auth - subscription OAuth conflicts with a custom API".into()
+            }
+            Self::ApiUnavailable => "Network - Claude API HTTPS check failed".into(),
+            Self::ProbeFailed => "Network - exit probe failed".into(),
+            Self::ClientExit(code) => format!("Client exited with status {code}"),
+            Self::OperationFailed => "Operation failed. See the terminal output.".into(),
+            Self::Pinned(ip) => format!("Auto-pin - pinned {ip}"),
+            Self::ResetPin => "Auto-pin cleared. Waiting for a new probe.".into(),
         }
     }
 }
@@ -159,7 +161,10 @@ fn append(dir: &Path, profile: Option<&str>, operation: &str, event: Event) -> R
 
 pub fn record(dir: &Path, profile: Option<&str>, operation: &str, event: Event) {
     if append(dir, profile, operation, event).is_err() {
-        notice::emit(Level::Warning, format_args!("无法写入本地日志"));
+        notice::emit(
+            Level::Warning,
+            format_args!("Could not write to the local log"),
+        );
     }
 }
 

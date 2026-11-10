@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define CW_ERROR_LABEL "[Wrapper/错误]"
+#define CW_ERROR_LABEL "[Wrapper/Error]"
 #define CW_ERROR_COLOR "\033[1;31m"
 #define CW_RESET_COLOR "\033[0m"
 
