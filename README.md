@@ -75,7 +75,7 @@ claude-wrapper run work-vpn -- --version
 
 `doctor` 单独执行网络预检。`run` 启动指定 Profile，`--` 后跟客户端参数。使用 `claude-wrapper run work-vpn --dry-run` 查看启动计划，使用 `claude-wrapper profile --help` 查看配置管理命令。
 
-启动提示以 `[Wrapper/出口]`、`[Wrapper/错误]` 等标签标识。`doctor` 会显示无凭据 HTTPS 探测的状态码，账号状态以客户端登录结果为准。需要兼容性诊断时可运行 `CLAUDE_WRAPPER_DIAGNOSTICS=1 cw`。设置 `NO_COLOR=1` 可关闭标签颜色。
+启动提示以 `[Wrapper/Exit]`、`[Wrapper/Error]` 等标签标识。`doctor` 会显示无凭据 HTTPS 探测的状态码，账号状态以客户端登录结果为准。需要兼容性诊断时可运行 `CLAUDE_WRAPPER_DIAGNOSTICS=1 cw`。设置 `NO_COLOR=1` 可关闭标签颜色。
 
 ### Profile 文件
 

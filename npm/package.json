@@ -1,6 +1,6 @@
 {
   "name": "claude-wrapper-macos",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A native macOS profile and verified-egress launcher for Claude Code",
   "license": "MIT",
   "repository": {

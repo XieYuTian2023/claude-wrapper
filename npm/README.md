@@ -24,7 +24,7 @@ claude-wrapper ui
 
 在首页按 `E` 编辑配置，按 `T` 指定 Claude Code 程序路径，按 `L` 查看错误、拦截和出口日志。
 
-启动提示使用 `[Wrapper/出口]`、`[Wrapper/错误]` 等标签。`doctor` 可查看 HTTPS 探测状态，`CLAUDE_WRAPPER_DIAGNOSTICS=1 cw` 可查看兼容性细节。
+启动提示使用 `[Wrapper/Exit]`、`[Wrapper/Error]` 等标签。`doctor` 可查看 HTTPS 探测状态，`CLAUDE_WRAPPER_DIAGNOSTICS=1 cw` 可查看兼容性细节。
 
 ### 出口校验
 
