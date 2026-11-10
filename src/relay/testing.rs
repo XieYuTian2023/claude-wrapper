@@ -19,6 +19,7 @@ const GEOIP_URL: &str = "https://geoip.test/";
 const TEST_LIMIT: Duration = Duration::from_secs(5);
 const CHECK_INTERVAL: Duration = Duration::from_millis(40);
 static SUPERVISION_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+const IPV6_EXIT: &str = "2606:4700::1111";
 
 struct LocalProxy {
     url: Url,
@@ -34,6 +35,10 @@ impl LocalProxy {
     }
 
     async fn start_in(region: &'static str) -> Self {
+        Self::start_with_ip(region, "8.8.8.8").await
+    }
+
+    async fn start_with_ip(region: &'static str, exit_ip: &'static str) -> Self {
         let tls = test_acceptor();
         let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();
         let url = Url::parse(&format!("http://{}", listener.local_addr().unwrap())).unwrap();
@@ -65,19 +70,32 @@ impl LocalProxy {
                             if target == "CONNECT geoip.test:444 HTTP/1.1" {
                                 return;
                             }
+                            if target == "CONNECT geoip.test:445 HTTP/1.1" {
+                                // A connected proxy tunnel that never completes TLS.
+                                let mut byte = [0; 1];
+                                while stream.read(&mut byte).await.unwrap_or(0) != 0 {}
+                                return;
+                            }
                             if target == "CONNECT geoip.test:443 HTTP/1.1" {
                                 let mut stream = BufReader::new(tls.accept(stream).await.unwrap());
                                 let request = head(&mut stream).await;
-                                if request.starts_with("HEAD /v1/models HTTP/1.1\r\n") {
+                                if let Some(path) = request
+                                    .lines().next().unwrap().strip_prefix("HEAD ")
+                                    .and_then(|line| line.strip_suffix(" HTTP/1.1"))
+                                {
                                     assert!(!request.to_ascii_lowercase().contains("authorization:"));
-                                    stream.write_all(b"HTTP/1.1 405 Method Not Allowed\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").await.unwrap();
+                                    let status = path.strip_prefix("/v1/models?status=")
+                                        .map(|value| value.parse::<u16>().unwrap())
+                                        .unwrap_or(405);
+                                    let response = format!("HTTP/1.1 {status} Fixture\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                                    stream.write_all(response.as_bytes()).await.unwrap();
                                     stream.flush().await.unwrap();
                                     return;
                                 }
                                 assert!(request.starts_with("GET / HTTP/1.1\r\n"), "{request}");
                                 probes.fetch_add(1, Ordering::SeqCst);
                                 let country = if country.load(Ordering::SeqCst) { "CN" } else { region };
-                                let ip = if new_ip.load(Ordering::SeqCst) { "8.8.4.4" } else { "8.8.8.8" };
+                                let ip = if new_ip.load(Ordering::SeqCst) { "8.8.4.4" } else { exit_ip };
                                 let body = format!(r#"{{"ip":"{ip}","country":"{country}"}}"#);
                                 let response = format!(
                                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
@@ -262,6 +280,98 @@ async fn claude_preflight_requires_api_transport_after_us_exit() {
     let error = session.preflight(Some(&reset)).await.unwrap_err();
     assert!(error.to_string().contains("Claude API HTTPS probe failed"));
     assert_eq!(proxy.probe_count.load(Ordering::SeqCst), 3);
+}
+
+#[tokio::test]
+async fn explicit_proxy_checks_ipv6_exit_and_reports_http_status_separately() {
+    let proxy = LocalProxy::start_with_ip("JP", IPV6_EXIT).await;
+    let expected_ip = IPV6_EXIT.parse::<IpAddr>().unwrap();
+    let exit = ExitPolicy {
+        geoip_url: Some(GEOIP_URL),
+        country: "JP",
+        expected_ip: Some(expected_ip),
+        ..ExitPolicy::default()
+    };
+    let mut probe = Probe::with_test_ca(&proxy.url, exit, CA_CERT).unwrap();
+
+    for status in [200, 401, 403, 405, 407, 429, 503] {
+        let api = Url::parse(&format!("https://geoip.test/v1/models?status={status}")).unwrap();
+        let mut report = DiagnosticPreflight::default();
+        probe
+            .diagnose_direct(Some(&api), &mut report)
+            .await
+            .unwrap();
+        assert_eq!(report.exit_ip, Some(expected_ip));
+        assert_eq!(
+            report.ip_check,
+            Some(proxy::IpCheck::FixedMatch(expected_ip))
+        );
+        assert_eq!(report.api_status.unwrap().as_u16(), status);
+    }
+}
+
+#[tokio::test]
+async fn relay_diagnostic_preserves_exit_evidence_without_pinning_after_api_failure() {
+    let proxy = LocalProxy::start().await;
+    let root = tempfile::tempdir().unwrap();
+    let pin_path = root.path().join("auto-pin");
+    let mut session = proxy
+        .open_session(ExitPolicy {
+            geoip_url: Some(GEOIP_URL),
+            auto_pin: Some(&pin_path),
+            ..ExitPolicy::default()
+        })
+        .await;
+    let api = Url::parse("https://geoip.test:444/v1/models").unwrap();
+
+    let report = session.diagnose(Some(&api)).await;
+    assert_eq!(report.exit_ip, Some("8.8.8.8".parse().unwrap()));
+    assert_eq!(report.ip_check, Some(proxy::IpCheck::AutoPending));
+    assert!(report.api_attempted);
+    assert!(report.api_status.is_none());
+    assert_eq!(
+        report.error.unwrap().downcast_ref::<proxy::ApiProbeError>(),
+        Some(&proxy::ApiProbeError::Connection),
+    );
+    assert!(!pin_path.exists());
+    assert_eq!(proxy.probe_count.load(Ordering::SeqCst), 1);
+
+    proxy.report_cn.store(true, Ordering::SeqCst);
+    let report = session.diagnose(Some(&api)).await;
+    assert!(report.exit_ip.is_none());
+    assert!(report.ip_check.is_none());
+    assert!(!report.api_attempted);
+    assert!(report.api_status.is_none());
+    assert!(report.error.unwrap().is::<proxy::UnexpectedExitCountry>());
+    assert!(!pin_path.exists());
+}
+
+#[tokio::test]
+async fn explicit_proxy_retains_legacy_pin_learning_after_https_timeout() {
+    let proxy = LocalProxy::start().await;
+    let root = tempfile::tempdir().unwrap();
+    let pin_path = root.path().join("auto-pin");
+    let exit = ExitPolicy {
+        geoip_url: Some(GEOIP_URL),
+        auto_pin: Some(&pin_path),
+        ..ExitPolicy::default()
+    };
+    let mut probe = Probe::with_test_ca(&proxy.url, exit, CA_CERT).unwrap();
+    let api = Url::parse("https://geoip.test:445/v1/models").unwrap();
+    let mut report = DiagnosticPreflight::default();
+    let error = probe
+        .diagnose_direct(Some(&api), &mut report)
+        .await
+        .unwrap_err();
+    assert_eq!(
+        error.downcast_ref::<proxy::ApiProbeError>(),
+        Some(&proxy::ApiProbeError::Timeout),
+    );
+    let ip = "8.8.8.8".parse().unwrap();
+    assert_eq!(report.exit_ip, Some(ip));
+    assert_eq!(report.ip_check, Some(proxy::IpCheck::AutoLearned(ip)));
+    assert_eq!(crate::exit_pin::read(&pin_path).unwrap(), Some(ip));
+    assert!(report.api_status.is_none());
 }
 
 fn test_acceptor() -> TlsAcceptor {

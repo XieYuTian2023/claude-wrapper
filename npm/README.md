@@ -24,7 +24,7 @@ claude-wrapper ui
 
 在首页按 `E` 编辑配置，按 `T` 指定 Claude Code 程序路径，按 `L` 查看错误、拦截和出口日志。
 
-启动提示使用 `[Wrapper/Exit]`、`[Wrapper/Error]` 等标签。`doctor` 可查看 HTTPS 探测状态，`CLAUDE_WRAPPER_DIAGNOSTICS=1 cw` 可查看兼容性细节。
+启动提示使用 `[Wrapper/Exit]`、`[Wrapper/Error]` 等标签。`doctor` 或界面中的 `H` 分别报告网络路径、出口地区、固定 IP 和无凭据 HTTPS 探测结果。探测只验证各自的请求，账号状态以客户端登录结果为准。使用 `run <profile> --dry-run` 可离线核对配置来源和 API 端点。
 
 ### 出口校验
 

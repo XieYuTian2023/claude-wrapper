@@ -1,4 +1,5 @@
 //! Terminal-only configuration workspace. Claude runs only after an explicit handoff.
+use crate::diagnostic::{Api, Report};
 use crate::journal::{self, Category};
 use crate::profile::{self, ExitIp, NetworkMode, Profile};
 use anyhow::{Context, Result, ensure};
@@ -629,7 +630,6 @@ fn collector(mut reader: impl Read + Send + 'static) -> io::Result<JoinHandle<Ve
 struct HealthJob {
     child: Child,
     stdout: Option<JoinHandle<Vec<u8>>>,
-    stderr: Option<JoinHandle<Vec<u8>>>,
     exited: bool,
     context: String,
     name: String,
@@ -641,78 +641,51 @@ impl HealthJob {
             .arg("--profiles-dir")
             .arg(dir)
             .arg("doctor")
+            .arg("--json")
             .arg(name)
             .arg("--target")
             .arg(target)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::null())
             .process_group(0)
             .spawn()?;
         let mut job = Self {
             child,
             stdout: None,
-            stderr: None,
             exited: false,
             context,
             name: name.into(),
         };
         let stdout = job.child.stdout.take().context("health stdout missing")?;
         job.stdout = Some(collector(stdout)?);
-        let stderr = job.child.stderr.take().context("health stderr missing")?;
-        job.stderr = Some(collector(stderr)?);
         Ok(job)
     }
 
-    fn poll(&mut self) -> Result<Option<(bool, String)>> {
-        let Some(status) = self.child.try_wait()? else {
+    fn poll(&mut self) -> Result<Option<HealthRecord>> {
+        if self.child.try_wait()?.is_none() {
             return Ok(None);
-        };
+        }
         self.exited = true;
         let output = self
             .stdout
             .take()
             .and_then(|handle| handle.join().ok())
             .unwrap_or_default();
-        let error = self
-            .stderr
-            .take()
-            .and_then(|handle| handle.join().ok())
-            .unwrap_or_default();
-        if status.success() {
-            let output = String::from_utf8_lossy(&output);
-            let mut message = output
-                .lines()
-                .find_map(|line| line.strip_prefix("exit "))
-                .map_or_else(
-                    || "出口检查通过".into(),
-                    |result| format!("出口 {}", result.trim()),
-                );
-            if output.lines().any(|line| line.starts_with("api-http ")) {
-                message.push_str(" · Claude API 可连接");
-            }
-            Ok(Some((true, message)))
-        } else {
-            let error = String::from_utf8_lossy(&error);
-            let message = if error.contains("(CN)") {
-                "检测到中国大陆出口，已阻断"
-            } else if error.contains("GeoIP exit IP mismatch") {
-                "固定 IP 不匹配，已阻断。按 L 查看实际值"
-            } else if error.contains("automatic exit IP changed during learning") {
-                "探测 IP 不一致。若节点会轮换 IP，可改为仅校验地区"
-            } else if error.contains("GeoIP exit country mismatch") {
-                "出口地区不匹配，已阻断。按 L 查看实际值"
-            } else if error.contains("explicit Claude subscription OAuth credential") {
-                "自定义 API 与订阅 OAuth 冲突，已阻断"
-            } else if error.contains("Claude API HTTPS probe failed") {
-                "出口地区通过，Claude API 不可达。请检查 VPN 或代理"
-            } else if error.contains("timed out") {
-                "检查超时，请确认网络连接"
-            } else {
-                "检查未通过，请确认客户端路径、VPN/代理与出口地区"
-            };
-            Ok(Some((false, message.into())))
-        }
+        let (status, message) = serde_json::from_slice::<Report>(&output).map_or_else(
+            |_| {
+                (
+                    HealthStatus::Failed,
+                    "未收到有效的检查结果。按 L 查看日志。".into(),
+                )
+            },
+            |report| (HealthStatus::from(&report), report.summary_zh()),
+        );
+        Ok(Some(HealthRecord {
+            context: self.context.clone(),
+            status,
+            message,
+        }))
     }
 }
 impl Drop for HealthJob {
@@ -726,15 +699,29 @@ impl Drop for HealthJob {
         if let Some(handle) = self.stdout.take() {
             let _ = handle.join();
         }
-        if let Some(handle) = self.stderr.take() {
-            let _ = handle.join();
+    }
+}
+enum HealthStatus {
+    Passed,
+    Warning,
+    Failed,
+}
+
+impl From<&Report> for HealthStatus {
+    fn from(report: &Report) -> Self {
+        if !report.passed() {
+            Self::Failed
+        } else if matches!(report.api, Api::Http(400..=599)) {
+            Self::Warning
+        } else {
+            Self::Passed
         }
     }
 }
+
 struct HealthRecord {
     context: String,
-    name: String,
-    success: bool,
+    status: HealthStatus,
     message: String,
 }
 struct App {
@@ -827,17 +814,10 @@ impl App {
     fn poll_health(&mut self) {
         let completed = self.health.as_mut().and_then(|job| job.poll().transpose());
         if let Some(result) = completed {
-            let job = self.health.take().expect("active health job");
+            self.health = None;
             match result {
-                Ok((success, message))
-                    if self.context().as_deref() == Some(job.context.as_str()) =>
-                {
-                    self.last_health = Some(HealthRecord {
-                        context: job.context.clone(),
-                        name: job.name.clone(),
-                        success,
-                        message,
-                    });
+                Ok(record) if self.context().as_deref() == Some(record.context.as_str()) => {
+                    self.last_health = Some(record);
                 }
                 _ => {
                     self.notice = "配置已变化或检查中断，旧探测结果未用于当前配置。".into();
@@ -1584,11 +1564,19 @@ fn render(frame: &mut Frame<'_>, app: &App) {
     let detail_block = t.block(" 配置详情 ");
     let inner = detail_block.inner(columns[1]);
     frame.render_widget(detail_block, columns[1]);
+    let report = app
+        .last_health
+        .as_ref()
+        .filter(|record| app.context().as_deref() == Some(record.context.as_str()));
+    let path_height = u16::from(report.is_none() || inner.height >= 12);
+    let health_height = report.map_or(2, |_| {
+        inner.height.saturating_sub(3 + 2 * path_height).min(8)
+    });
     let detail_rows = Layout::vertical([
         Constraint::Min(3),
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(2),
+        Constraint::Length(path_height),
+        Constraint::Length(path_height),
+        Constraint::Length(health_height),
     ])
     .split(inner);
     frame.render_widget(
@@ -1612,41 +1600,29 @@ fn render(frame: &mut Frame<'_>, app: &App) {
         .style(Style::default().fg(t.muted)),
         detail_rows[2],
     );
-    let health_line = if let Some(job) = &app.health {
+    let health = if let Some(job) = &app.health {
         let icons = ["⠋", "⠙", "⠹", "⠸"];
-        Line::from(Span::styled(
-            format!(
-                "{} 本次探测 · {}",
-                if app.animate {
-                    icons[app.tick % 4]
-                } else {
-                    "…"
-                },
-                single_line_tail(&job.name, 12)
-            ),
-            Style::default().fg(t.teal),
+        Paragraph::new(format!(
+            "{} 本次探测 · {}",
+            if app.animate {
+                icons[app.tick % 4]
+            } else {
+                "…"
+            },
+            single_line_tail(&job.name, 12)
         ))
-    } else if let Some(record) = &app.last_health
-        && app.context().as_deref() == Some(record.context.as_str())
-    {
-        Line::from(Span::styled(
-            format!(
-                "最近探测 · {} · {}",
-                single_line_tail(&record.name, 12),
-                record.message
-            ),
-            Style::default().fg(if record.success { t.teal } else { t.red }),
-        ))
+        .style(Style::default().fg(t.teal))
+    } else if let Some(record) = report {
+        let color = match record.status {
+            HealthStatus::Passed => t.teal,
+            HealthStatus::Warning => t.orange,
+            HealthStatus::Failed => t.red,
+        };
+        Paragraph::new(record.message.as_str()).style(Style::default().fg(color))
     } else {
-        Line::from(Span::styled(
-            "尚未检查当前配置 · H 检查",
-            Style::default().fg(t.muted),
-        ))
+        Paragraph::new("尚未检查当前配置 · H 检查").style(Style::default().fg(t.muted))
     };
-    frame.render_widget(
-        Paragraph::new(health_line).wrap(Wrap { trim: false }),
-        detail_rows[3],
-    );
+    frame.render_widget(health.wrap(Wrap { trim: false }), detail_rows[3]);
     frame.render_widget(
         Paragraph::new(app.notice.as_str())
             .style(Style::default().fg(t.muted))
@@ -1973,6 +1949,41 @@ mod tests {
         assert!(!text.contains(&app.target));
         let shortened = single_line_tail("abc😀😀😀/文件名", 10);
         assert!(Span::raw(&shortened).width() <= 10);
+    }
+    #[test]
+    fn narrow_screen_keeps_https_result_visible_after_ipv6_exit() {
+        use crate::diagnostic::{Exit, Pin, Route, Setup};
+
+        let root = tempfile::tempdir().unwrap();
+        let profile = Profile::new(ZONES[0]).unwrap();
+        profile::save(root.path(), "qa", &profile).unwrap();
+        let mut app = App::new(root.path().to_owned(), true).unwrap();
+        let report = Report {
+            setup: Setup::Ready,
+            route: Some(Route::Vpn),
+            vpn_interface: Some("utun12".into()),
+            exit: Exit::Passed("2001:db8:abcd:1234:fedc:ba98:7654:3210".parse().unwrap()),
+            region: Some("US".into()),
+            pin: Pin::RegionOnly,
+            api: Api::Http(403),
+        };
+        app.last_health = Some(HealthRecord {
+            context: app.context().unwrap(),
+            status: HealthStatus::from(&report),
+            message: report.summary_zh(),
+        });
+        let mut terminal = Terminal::new(ratatui::backend::TestBackend::new(60, 18)).unwrap();
+        terminal.draw(|frame| render(frame, &app)).unwrap();
+        let text = terminal
+            .backend()
+            .buffer()
+            .content
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect::<String>();
+        assert!(text.contains("403"));
+        assert!(text.replace(' ', "").contains("请求被拒"));
+        assert!(text.contains("utun12"));
     }
     #[test]
     fn invalid_edit_does_not_replace_existing_profile() {

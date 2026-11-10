@@ -75,7 +75,11 @@ claude-wrapper run work-vpn -- --version
 
 `doctor` 单独执行网络预检。`run` 启动指定 Profile，`--` 后跟客户端参数。使用 `claude-wrapper run work-vpn --dry-run` 查看启动计划，使用 `claude-wrapper profile --help` 查看配置管理命令。
 
-启动提示以 `[Wrapper/Exit]`、`[Wrapper/Error]` 等标签标识。`doctor` 会显示无凭据 HTTPS 探测的状态码，账号状态以客户端登录结果为准。需要兼容性诊断时可运行 `CLAUDE_WRAPPER_DIAGNOSTICS=1 cw`。设置 `NO_COLOR=1` 可关闭标签颜色。
+启动提示以 `[Wrapper/Exit]`、`[Wrapper/Error]` 等标签标识。设置 `NO_COLOR=1` 可关闭标签颜色。
+
+`doctor` 和界面中的 `H` 会分别报告网络模式、出口地区、固定 IP 状态和不带账号凭据的 HTTPS 探测结果。VPN 模式会显示实际使用的隧道接口。HTTP 401、403、429 和 5xx 表示探测收到了响应，具体含义会在结果中列出。出口和 HTTPS 探测只覆盖各自的请求。DNS、IPv4/IPv6 旁路和其他目的地的出口仍需单独确认。
+
+`run --dry-run` 可离线核对启动配置、代理来源和 API 端点。代理和 API 地址只显示协议、主机和端口，鉴权冲突只列变量名。预览不会启动客户端或写入出口 IP。
 
 ### Profile 文件
 

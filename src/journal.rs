@@ -40,6 +40,7 @@ impl Category {
 
 #[derive(Deserialize, Serialize)]
 pub enum Event {
+    Diagnostic(crate::diagnostic::Report),
     CountryBlocked { observed: String, expected: String },
     IpBlocked { observed: IpAddr, expected: IpAddr },
     UnstableIp { first: IpAddr, observed: IpAddr },
@@ -55,6 +56,8 @@ pub enum Event {
 impl Event {
     pub fn category(&self) -> Category {
         match self {
+            Self::Diagnostic(report) if report.blocked() => Category::Block,
+            Self::Diagnostic(report) if report.passed() => Category::Exit,
             Self::CountryBlocked { .. }
             | Self::IpBlocked { .. }
             | Self::UnstableIp { .. }
@@ -66,6 +69,7 @@ impl Event {
 
     pub fn summary(&self) -> String {
         match self {
+            Self::Diagnostic(report) => report.journal_summary(),
             Self::CountryBlocked { observed, .. } if observed == "CN" => {
                 "Region - Mainland China exit detected (CN)".into()
             }

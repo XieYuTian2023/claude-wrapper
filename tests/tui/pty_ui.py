@@ -447,9 +447,9 @@ def exercise_management(binary, fixture, out, rows=42, columns=132):
         require(not pin.exists(),"Reset left the automatic pin behind")
         checks["automatic_exit_reset_can_be_cancelled_and_confirmed"]=True
         ui.key("l")
-        ui.wait_text(["Wrapper 日志", "[出口]", "已清除，等待重新探测"])
+        ui.wait_text(["Wrapper Logs", "[Exit]", "Auto-pin cleared. Waiting for a new probe."])
         ui.key(b"\x1b[D")
-        ui.wait_text(["[出口]", "已清除，等待重新探测"])
+        ui.wait_text(["[Exit]", "Auto-pin cleared. Waiting for a new probe."])
         ui.key(b"\x1b")
         ui.key("c")
         ui.wait_text(["复制配置"])
@@ -534,7 +534,7 @@ def exercise_narrow(binary, fixture, out):
 
 
 def exercise_handoff(binary, fixture, out):
-    """Reach the same exit preflight from Enter and the saved default."""
+    """Reach the same exit preflight from H, Enter, and the saved default."""
     name = "qa-handoff"
     device_id = "f" * 64
     profiles = fixture / "profiles"
@@ -544,9 +544,8 @@ def exercise_handoff(binary, fixture, out):
         proxy.settimeout(6)
         port = proxy.getsockname()[1]
         profile = (
-            f'hostname = "qa-handoff-mac"\nusername = "qadev"\n'
-            f'timezone = "America/Los_Angeles"\nlocale = "en_US.UTF-8"\n'
-            f'identity = "env"\nnetwork = "proxy-env"\n'
+            'timezone = "America/Los_Angeles"\nlocale = "en_US.UTF-8"\n'
+            'identity = "env"\nnetwork = "proxy-env"\n'
             f'proxy_url = "http://127.0.0.1:{port}"\ndevice_id = "{device_id}"\n'
         )
         (profiles / f"{name}.toml").write_text(profile)
@@ -556,7 +555,7 @@ def exercise_handoff(binary, fixture, out):
 
         def reject_probes():
             try:
-                for _ in range(2):
+                for _ in range(3):
                     connection, _ = proxy.accept()
                     with connection:
                         connection.settimeout(2)
@@ -589,8 +588,13 @@ def exercise_handoff(binary, fixture, out):
             select_profile(ui, name)
             worker = threading.Thread(target=reject_probes, daemon=True)
             worker.start()
-            terminal = ui.exit(keys=b"\r")
             state = profiles / "clients" / name / ".claude.json"
+            ui.key("h")
+            ui.wait_text(["出口探测服务连接失败", "API 未执行"])
+            ui.snapshot("health-probe-failed")
+            require(not state.exists(), "H created Claude configuration state")
+            require(not (fixture / "unexpected-client.log").exists(), "H launched Claude")
+            terminal = ui.exit(keys=b"\r")
             require(state.is_file() and json.loads(state.read_text())["userID"] == device_id,
                     "TUI handoff did not resolve the relative Profile directory")
             require(terminal["exit"] == 1 and terminal["termios_restored"] and terminal["stderr_termios_restored"],
@@ -615,18 +619,18 @@ def exercise_handoff(binary, fixture, out):
                     "Direct start changed terminal attributes")
             require(state.is_file() and json.loads(state.read_text())["userID"] == device_id,
                     "Direct start did not use the saved default Profile")
-            require(requests == [b"CONNECT api.country.is:443 HTTP/1.1"] * 2 and not proxy_errors,
-                    "Both entry points must contact the owned proxy before starting the client")
+            require(requests == [b"CONNECT api.country.is:443 HTTP/1.1"] * 3 and not proxy_errors,
+                    "H, Enter, and direct start must each contact the owned proxy")
             require(not (fixture / "unexpected-client.log").exists(), "Client started after the probe was rejected")
             logs = TerminalRun(binary, fixture, out / "logs", ("ui",), rows=24, columns=80)
             try:
                 logs.wait_text(["Claude 环境工作台"])
                 logs.key("l")
-                logs.wait_text(["Wrapper 日志", "[错误]", "出口探测失败"])
+                logs.wait_text(["Wrapper Logs", "[Error]", "Network - exit probe failed"])
                 logs.key(b"\x1b[C")
-                logs.wait_text(["此分类暂无记录"])
+                logs.wait_text(["No entries in this category."])
                 logs.key(b"\x1b[C")
-                logs.wait_text(["[错误]", "出口探测失败"])
+                logs.wait_text(["[Error]", "Network - exit probe failed"])
                 logs.snapshot("classified-errors")
                 logs.key(b"\x1b")
                 require(logs.exit(keys="q")["exit"] == 0, "Log view did not close cleanly")
@@ -636,6 +640,7 @@ def exercise_handoff(binary, fixture, out):
                     "local_probes": [request.decode() for request in requests],
                     "relative_profile_directory_preserved": True, "default_profile_persisted": True,
                     "default_marker_follows_profile_not_selection": True,
+                    "health_result_visible_without_launch": True,
                     "outside_tui_errors_visible_and_filterable": True,
                     "client_started": False, "public_network": False}
         finally:
@@ -669,7 +674,7 @@ def main():
         require(node.is_file() and os.access(node,os.X_OK),"Node must be an executable file")
         (fixture/"bin"/"node").symlink_to(node)
     report={"fixture":str(fixture),"binary":str(binary),"cases":{},
-        "scope":"Real controlling PTY, owned temporary HOME/profiles, no client session/model/account/public network requested. Enter and direct start use a rejecting local proxy."}
+        "scope":"Real controlling PTY, owned temporary HOME/profiles, no client session/model/account/public network requested. H, Enter, and direct start use a rejecting local proxy."}
     cases=[("management",lambda:exercise_management(binary,fixture,out/"management",args.rows,args.columns)),
            ("ctrl-c-key",lambda:exercise_exit(binary,fixture,out/"ctrl-c-key",control_c=True)),
            ("narrow-80x24",lambda:exercise_narrow(binary,fixture,out/"narrow-80x24")),

@@ -25,11 +25,12 @@ def main():
     args = parser.parse_args()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    version = json.loads((ROOT / "npm/package.json").read_text())["version"]
     report = ROOT / "reports/2026-11-08-identity-sandbox-audit.md"
     evidence = ROOT / "reports/evidence/2026-11-08-summary.json"
     index = {}
     for arch, rust, native, guard, validation in (
-        ("x86_64", "target/release", "native/macos/build", "native/egress/build", "Intel macOS 15.8.2: bounded actual-client and source tests passed; see AUDIT.md"),
+        ("x86_64", "target/release", "native/macos/build", "native/egress/build", "Intel build. AUDIT.md describes earlier, version-specific observations."),
         ("arm64", "target/aarch64-apple-darwin/release", "native/macos/build/arm64", "native/egress/build/arm64", "Cross-built only; no Apple Silicon runtime validation"),
     ):
         name = f"claude-wrapper-macos-{arch}"
@@ -55,7 +56,7 @@ def main():
             target = destination / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-        readme = f"""Claude Wrapper — macOS {arch} — 2026-11-08
+        readme = f"""Claude Wrapper {version} — macOS {arch}
 
 Validation: {validation}
 

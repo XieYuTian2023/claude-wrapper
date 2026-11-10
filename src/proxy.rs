@@ -73,6 +73,7 @@ struct GeoResponse {
 pub(crate) struct UnexpectedExitCountry {
     pub observed: String,
     pub expected: String,
+    pub ip: IpAddr,
 }
 
 impl std::fmt::Display for UnexpectedExitCountry {
@@ -106,6 +107,7 @@ fn validate_response(body: &[u8], expected: &str) -> Result<IpAddr> {
         return Err(UnexpectedExitCountry {
             observed: exit.country,
             expected: expected.into(),
+            ip: exit.ip,
         }
         .into());
     }
@@ -141,6 +143,69 @@ impl std::fmt::Display for ExitIpError {
 }
 
 impl std::error::Error for ExitIpError {}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum IpCheck {
+    RegionOnly,
+    FixedMatch(IpAddr),
+    AutoMatch(IpAddr),
+    AutoLearned(IpAddr),
+    AutoPending,
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct DiagnosticPreflight {
+    pub exit_ip: Option<IpAddr>,
+    pub vpn_interface: Option<String>,
+    pub api_attempted: bool,
+    pub api_status: Option<StatusCode>,
+    pub ip_check: Option<IpCheck>,
+    pub error: Option<anyhow::Error>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ApiProbeError {
+    Timeout,
+    Connection,
+}
+
+impl std::fmt::Display for ApiProbeError {
+    fn fmt(&self, output: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let detail = match self {
+            Self::Timeout => "timed out",
+            Self::Connection => "connection failed",
+        };
+        write!(
+            output,
+            "Claude API HTTPS probe failed through the selected route: {detail}"
+        )
+    }
+}
+
+impl std::error::Error for ApiProbeError {}
+
+#[derive(Debug)]
+pub(crate) enum GeoIpProbeError {
+    Timeout,
+    Connection,
+    Http(StatusCode),
+    InvalidResponse,
+}
+
+impl std::fmt::Display for GeoIpProbeError {
+    fn fmt(&self, output: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Timeout => output.write_str("GeoIP proxy probe timed out"),
+            Self::Connection => output.write_str(
+                "proxy probe failed to reach the GeoIP service through the configured proxy",
+            ),
+            Self::Http(status) => write!(output, "GeoIP probe returned HTTP {}", status.as_u16()),
+            Self::InvalidResponse => output.write_str("GeoIP probe returned an invalid response"),
+        }
+    }
+}
+
+impl std::error::Error for GeoIpProbeError {}
 
 pub fn run_network<T>(future: impl Future<Output = Result<T>>) -> Result<T> {
     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -227,31 +292,34 @@ impl Probe {
             .await
             .map_err(|error| {
                 if error.is_timeout() {
-                    anyhow::anyhow!("proxy probe timed out")
+                    GeoIpProbeError::Timeout
                 } else {
-                    anyhow::anyhow!(
-                        "proxy probe failed to reach the GeoIP service through the configured proxy"
-                    )
+                    GeoIpProbeError::Connection
                 }
             })?;
-        ensure!(
-            response.status().is_success(),
-            "GeoIP service returned HTTP {}",
-            response.status()
-        );
+        if !response.status().is_success() {
+            return Err(GeoIpProbeError::Http(response.status()).into());
+        }
         let mut body = Vec::new();
-        while let Some(chunk) = response
-            .chunk()
-            .await
-            .map_err(|_| anyhow::anyhow!("could not read the GeoIP response"))?
-        {
-            ensure!(
-                chunk.len() <= MAX_RESPONSE_BYTES - body.len(),
-                "GeoIP response exceeds size limit"
-            );
+        while let Some(chunk) = response.chunk().await.map_err(|error| {
+            if error.is_timeout() {
+                GeoIpProbeError::Timeout
+            } else {
+                GeoIpProbeError::InvalidResponse
+            }
+        })? {
+            if chunk.len() > MAX_RESPONSE_BYTES - body.len() {
+                return Err(GeoIpProbeError::InvalidResponse.into());
+            }
             body.extend_from_slice(&chunk);
         }
-        let actual = validate_response(&body, &self.country)?;
+        let actual = validate_response(&body, &self.country).map_err(|error| {
+            if error.is::<UnexpectedExitCountry>() {
+                error
+            } else {
+                GeoIpProbeError::InvalidResponse.into()
+            }
+        })?;
         if let Some(expected) = self.expected_ip {
             verify_ip(actual, expected)?;
         }
@@ -278,12 +346,87 @@ impl Probe {
         Ok(())
     }
 
-    pub(crate) async fn check_api(&self, target: &Url) -> Result<StatusCode> {
-        let response = self.client.head(target.clone()).send().await.map_err(|_| {
-            anyhow::anyhow!("Claude API HTTPS probe failed through the selected route")
-        })?;
+    async fn check_api(&self, target: &Url) -> Result<StatusCode> {
+        let response = self
+            .client
+            .head(target.clone())
+            .send()
+            .await
+            .map_err(|error| {
+                if error.is_timeout() {
+                    ApiProbeError::Timeout
+                } else {
+                    ApiProbeError::Connection
+                }
+            })?;
         Ok(response.status())
     }
+
+    async fn report_exit(&self, report: &mut DiagnosticPreflight) -> Result<IpAddr> {
+        let exit_ip = self.check().await?;
+        report.exit_ip = Some(exit_ip);
+        report.ip_check = Some(match (self.auto_pin.is_some(), self.expected_ip) {
+            (false, None) => IpCheck::RegionOnly,
+            (false, Some(ip)) => IpCheck::FixedMatch(ip),
+            (true, Some(ip)) => IpCheck::AutoMatch(ip),
+            (true, None) => IpCheck::AutoPending,
+        });
+        Ok(exit_ip)
+    }
+
+    async fn report_api(&self, api: Option<&Url>, report: &mut DiagnosticPreflight) -> Result<()> {
+        if let Some(api) = api {
+            report.api_attempted = true;
+            report.api_status = Some(self.check_api(api).await?);
+        }
+        Ok(())
+    }
+
+    async fn report_pin(
+        &mut self,
+        exit_ip: IpAddr,
+        report: &mut DiagnosticPreflight,
+    ) -> Result<()> {
+        self.learn_ip(exit_ip).await?;
+        if report.ip_check == Some(IpCheck::AutoPending) {
+            report.ip_check = self.expected_ip.map(IpCheck::AutoLearned);
+        }
+        Ok(())
+    }
+
+    pub(crate) async fn diagnose(
+        &mut self,
+        api: Option<&Url>,
+        report: &mut DiagnosticPreflight,
+    ) -> Result<()> {
+        let exit_ip = self.report_exit(report).await?;
+        self.report_api(api, report).await?;
+        self.report_pin(exit_ip, report).await
+    }
+
+    pub(crate) async fn diagnose_direct(
+        &mut self,
+        api: Option<&Url>,
+        report: &mut DiagnosticPreflight,
+    ) -> Result<()> {
+        let exit_ip = self.report_exit(report).await?;
+        // Direct proxy diagnostics previously learned the pin with only the exit probe.
+        self.report_pin(exit_ip, report).await?;
+        self.report_api(api, report).await
+    }
+}
+
+pub(crate) fn doctor_proxy(
+    proxy: &Url,
+    exit: ExitPolicy<'_>,
+    api: Option<&Url>,
+) -> Result<DiagnosticPreflight> {
+    run_network(async {
+        let mut probe = Probe::new(proxy, exit)?;
+        let mut report = DiagnosticPreflight::default();
+        report.error = probe.diagnose_direct(api, &mut report).await.err();
+        Ok(report)
+    })
 }
 
 pub fn check(proxy: &Url, exit: ExitPolicy<'_>) -> Result<IpAddr> {

@@ -1,4 +1,5 @@
 mod client;
+mod diagnostic;
 mod exit_pin;
 mod exit_regions;
 mod journal;
@@ -69,6 +70,8 @@ enum Action {
     Doctor {
         #[command(flatten)]
         launch: Launch,
+        #[arg(long, hide = true)]
+        json: bool,
     },
 }
 
@@ -254,7 +257,11 @@ struct Launch {
 
 struct Plan {
     profile: Profile,
+    profile_name: String,
     proxy: Option<Url>,
+    proxy_from_cli: bool,
+    api_from_cli: bool,
+    api_endpoint: Option<Url>,
     target: PathBuf,
     identity_helper: Option<PathBuf>,
     network: Network,
@@ -271,6 +278,21 @@ enum Network {
     ManagedVpn(PathBuf),
 }
 
+#[derive(Debug)]
+struct CredentialConflict(String);
+
+impl std::fmt::Display for CredentialConflict {
+    fn fmt(&self, output: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            output,
+            "explicit Claude subscription OAuth credential is incompatible with a custom API endpoint ({})",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for CredentialConflict {}
+
 impl Plan {
     fn exit_policy(&self) -> proxy::ExitPolicy<'_> {
         proxy::ExitPolicy {
@@ -285,9 +307,13 @@ impl Plan {
     }
 
     fn check_credentials(&self) -> Result<()> {
-        if !self.bun_identity {
-            return Ok(());
+        if self.bun_identity {
+            self.review_credentials()?;
         }
+        Ok(())
+    }
+
+    fn review_credentials(&self) -> Result<()> {
         const SUBSCRIPTION_OAUTH: [&str; 3] = [
             "CLAUDE_CODE_OAUTH_TOKEN",
             "CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR",
@@ -304,13 +330,26 @@ impl Plan {
                         .any(|removed| removed == name)
             })
             .collect::<Vec<_>>();
-        if let Some(target) = &self.profile.api_base_url {
-            let custom = proxy::parse_geoip(target)?.origin()
-                != Url::parse("https://api.anthropic.com")?.origin();
-            ensure!(
-                !custom || !active.iter().any(|name| SUBSCRIPTION_OAUTH.contains(name)),
-                "explicit Claude subscription OAuth credential is incompatible with a custom API endpoint"
-            );
+        if let Some(target) = &self.api_endpoint
+            && target.origin() != Url::parse("https://api.anthropic.com")?.origin()
+        {
+            let oauth = active
+                .iter()
+                .copied()
+                .filter(|name| SUBSCRIPTION_OAUTH.contains(name))
+                .collect::<Vec<_>>();
+            if !oauth.is_empty() {
+                let names = oauth.join(", ");
+                if self.bun_identity {
+                    return Err(CredentialConflict(names).into());
+                }
+                notice::emit(
+                    notice::Level::Warning,
+                    format_args!(
+                        "Claude subscription OAuth settings with a custom API endpoint ({names})"
+                    ),
+                );
+            }
         }
         if active.len() > 1 {
             notice::emit(
@@ -340,6 +379,10 @@ impl Plan {
     fn prepare(dir: &Path, launch: Launch) -> Result<Self> {
         let mut profile = profile::load(dir, &launch.profile)?;
         let mut credential_variables = profile.proxy_env.iter().cloned().collect::<Vec<_>>();
+        let proxy_from_cli = launch.overrides.proxy.is_some()
+            || launch.overrides.proxy_env.is_some()
+            || launch.overrides.vpn_interface.is_some();
+        let api_from_cli = launch.overrides.api_base_url.is_some();
         launch.overrides.apply(&mut profile);
         if let Some(variable) = &profile.proxy_env
             && !credential_variables.contains(variable)
@@ -347,6 +390,11 @@ impl Plan {
             credential_variables.push(variable.clone());
         }
         profile.validate()?;
+        let api_endpoint = profile
+            .api_base_url
+            .as_deref()
+            .map(proxy::parse_geoip)
+            .transpose()?;
         let proxy = if profile.vpn_interface.is_some() {
             None
         } else {
@@ -455,19 +503,24 @@ impl Plan {
         };
         Ok(Self {
             profile,
+            client_config: std::path::absolute(dir.join("clients").join(&launch.profile))?,
+            profile_name: launch.profile,
             proxy,
+            proxy_from_cli,
+            api_from_cli,
+            api_endpoint,
             target,
             identity_helper,
             network,
             credential_variables,
             bun_identity,
-            client_config: std::path::absolute(dir.join("clients").join(&launch.profile))?,
             auto_exit_pin,
         })
     }
 
     fn report(&self) {
         println!("target    {}", self.target.display());
+        println!("profile   {}", self.profile_name);
         println!("timezone  {}", self.profile.timezone);
         println!("locale    {}", self.profile.locale);
         println!("config    {}", self.client_config.display());
@@ -488,17 +541,33 @@ impl Plan {
         if let Some(ip) = self.profile.expected_exit_ip {
             println!("expected-exit  {}", String::from(ip));
         }
-        println!(
-            "api       {}",
-            self.profile
-                .api_base_url
-                .as_deref()
-                .unwrap_or("https://api.anthropic.com (official default)")
-        );
+        if let Some(api) = &self.api_endpoint {
+            let source = if self.api_from_cli {
+                "CLI override"
+            } else {
+                "profile"
+            };
+            println!(
+                "api       {} ({source})",
+                api.origin().ascii_serialization()
+            );
+        } else {
+            println!("api       https://api.anthropic.com (official default)");
+        }
+        let source = if self.proxy_from_cli {
+            "CLI override"
+        } else {
+            "profile"
+        };
         if let Some(proxy) = &self.proxy {
-            println!("proxy     {}", proxy.origin().ascii_serialization());
+            let origin = proxy.origin().ascii_serialization();
+            if let Some(name) = &self.profile.proxy_env {
+                println!("proxy     {origin} ({source}, environment variable {name})");
+            } else {
+                println!("proxy     {origin} ({source})");
+            }
         } else if let Some(interface) = &self.profile.vpn_interface {
-            println!("vpn       {interface}");
+            println!("vpn       {interface} ({source})");
         }
         match &self.identity_helper {
             Some(helper) if self.bun_identity => {
@@ -530,21 +599,21 @@ impl Plan {
             }
         }
         if self.profile.hide_interfaces.unwrap_or(self.bun_identity) {
-            println!("interfaces  enumeration denied");
+            println!("interfaces  enumeration restriction configured");
         }
         if self
             .profile
             .native_identity_guard
             .unwrap_or(self.bun_identity)
         {
-            println!("identity-api  native UUID/hardware/location sources restricted");
+            println!("identity-api  native UUID/hardware/location restriction configured");
         }
         if self
             .profile
             .isolate_identity_files
             .unwrap_or(self.bun_identity)
         {
-            println!("identity-files  system identity preferences restricted");
+            println!("identity-files  system identity preferences restriction configured");
         }
     }
 
@@ -789,6 +858,134 @@ fn saved_launch(profile: String, target: OsString) -> Launch {
     }
 }
 
+fn doctor(dir: &Path, launch: Launch, json: bool) -> Result<i32> {
+    use diagnostic::{Api, Exit, Pin, Report, Route, Setup};
+
+    let name = launch.profile.clone();
+    let mut report = Report::default();
+    let plan = (|| -> Result<Plan> {
+        let plan = Plan::prepare(dir, launch)?;
+        report.route = Some(match plan.network {
+            Network::ProxyEnv => Route::ProxyEnv,
+            Network::SocketGuard(_) => Route::SocketGuard,
+            Network::ManagedRelay(_) => Route::Relay,
+            Network::ManagedVpn(_) => Route::Vpn,
+        });
+        report.region = Some(plan.profile.exit_country().into());
+        if let Err(error) = plan.review_credentials() {
+            if let Some(conflict) = error.downcast_ref::<CredentialConflict>() {
+                report.setup = Setup::CredentialConflict;
+                if !json {
+                    eprintln!("{conflict}");
+                }
+            }
+            return Err(error);
+        }
+        report.setup = Setup::InvalidClient;
+        plan.check_native_target()?;
+        Ok(plan)
+    })();
+
+    if let Ok(plan) = plan {
+        if !json {
+            plan.report();
+        }
+        let exit = plan.exit_policy();
+        report.pin = if let Some(ip) = exit.expected_ip {
+            Pin::Fixed(ip)
+        } else if let Some(path) = exit.auto_pin {
+            match exit_pin::read(path) {
+                Ok(Some(ip)) => Pin::Pinned(ip),
+                Ok(None) => Pin::Learning,
+                Err(_) => Pin::Failed,
+            }
+        } else {
+            Pin::RegionOnly
+        };
+        let checked = (|| -> Result<proxy::DiagnosticPreflight> {
+            let api = match &plan.api_endpoint {
+                Some(endpoint) => endpoint.clone(),
+                None => Url::parse("https://api.anthropic.com/v1/models")?,
+            };
+            match plan.network {
+                #[cfg(target_os = "macos")]
+                Network::ManagedVpn(_) => relay::doctor_vpn(
+                    plan.profile
+                        .vpn_interface
+                        .as_deref()
+                        .context("VPN interface missing")?,
+                    exit,
+                    Some(&api),
+                ),
+                #[cfg(target_os = "macos")]
+                Network::ManagedRelay(_) => relay::doctor(
+                    plan.proxy.as_ref().context("proxy endpoint missing")?,
+                    exit,
+                    Some(&api),
+                ),
+                _ => proxy::doctor_proxy(
+                    plan.proxy.as_ref().context("proxy endpoint missing")?,
+                    exit,
+                    Some(&api),
+                ),
+            }
+        })();
+        match checked {
+            Err(_) => report.setup = Setup::RouteUnavailable,
+            Ok(checked) => {
+                report.setup = Setup::Ready;
+                report.vpn_interface = checked.vpn_interface;
+                report.exit = checked.exit_ip.map_or(Exit::Unavailable, Exit::Passed);
+                if let Some(status) = checked.api_status {
+                    report.api = Api::Http(status.as_u16());
+                }
+                report.pin = match checked.ip_check {
+                    Some(proxy::IpCheck::FixedMatch(ip)) => Pin::Fixed(ip),
+                    Some(proxy::IpCheck::AutoMatch(ip)) => Pin::Pinned(ip),
+                    Some(proxy::IpCheck::AutoLearned(ip)) => Pin::Learned(ip),
+                    Some(proxy::IpCheck::AutoPending) => Pin::Learning,
+                    Some(proxy::IpCheck::RegionOnly) => Pin::RegionOnly,
+                    None => report.pin,
+                };
+                if let Some(error) = &checked.error {
+                    match error.downcast_ref::<proxy::ApiProbeError>() {
+                        Some(proxy::ApiProbeError::Timeout) => report.api = Api::Timeout,
+                        Some(proxy::ApiProbeError::Connection) => {
+                            report.api = Api::ConnectionFailed
+                        }
+                        None if checked.api_attempted && checked.api_status.is_none() => {
+                            report.api = Api::ConnectionFailed;
+                        }
+                        None => {
+                            let failure = Exit::from_error(error);
+                            if checked.exit_ip.is_some() {
+                                report.pin = Pin::Failed;
+                            }
+                            if !matches!(failure, Exit::Unavailable) || checked.exit_ip.is_none() {
+                                report.exit = failure;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if json {
+        println!("{}", serde_json::to_string(&report)?);
+    } else {
+        print!("{report}");
+    }
+    let code = i32::from(!report.passed());
+    journal::record(
+        dir,
+        Some(&name),
+        "doctor",
+        journal::Event::Diagnostic(report),
+    );
+    Ok(code)
+}
+
 fn dispatch(cli: Cli) -> Result<i32> {
     if matches!(&cli.action, None | Some(Action::Ui { .. }))
         && (!io::stdin().is_terminal() || !io::stdout().is_terminal())
@@ -800,6 +997,17 @@ fn dispatch(cli: Cli) -> Result<i32> {
     }
     let dir = profile::directory(cli.profiles_dir)?;
     let action = match cli.action {
+        Some(Action::Run {
+            launch,
+            dry_run: true,
+            ..
+        }) => {
+            let plan = Plan::prepare(&dir, launch)?;
+            plan.review_credentials()?;
+            plan.report();
+            println!("checks    offline preview; network and runtime checks not run");
+            return Ok(0);
+        }
         None | Some(Action::Ui { .. }) => {
             let no_animation = matches!(cli.action, Some(Action::Ui { no_animation: true }));
             match tui::run(dir.clone(), no_animation)? {
@@ -824,57 +1032,18 @@ fn dispatch(cli: Cli) -> Result<i32> {
     };
     let (operation, profile_name) = match &action {
         Action::Run { launch, .. } => ("run", Some(launch.profile.clone())),
-        Action::Doctor { launch } => ("doctor", Some(launch.profile.clone())),
+        Action::Doctor { launch, .. } => ("doctor", Some(launch.profile.clone())),
         _ => ("profile", None),
     };
     let result = (|| -> Result<i32> {
         match action {
             Action::Ui { .. } | Action::Start { .. } => unreachable!(),
             Action::Profile { action } => manage(&dir, action)?,
-            Action::Doctor { launch } => {
-                let plan = Plan::prepare(&dir, launch)?;
-                plan.check_credentials()?;
-                plan.report();
-                plan.check_native_target()?;
-                let exit = plan.exit_policy();
-                let api = plan.api_probe_url()?;
-                #[cfg(target_os = "macos")]
-                if matches!(plan.network, Network::ManagedVpn(_)) {
-                    let checked = relay::doctor_vpn(
-                        plan.profile
-                            .vpn_interface
-                            .as_deref()
-                            .context("VPN interface missing")?,
-                        exit,
-                        api.as_ref(),
-                    )?;
-                    print_preflight(checked, exit.country);
-                    return Ok(0);
-                }
-                let proxy = plan
-                    .proxy
-                    .as_ref()
-                    .context("this network mode requires an HTTP(S) proxy")?;
-                #[cfg(target_os = "macos")]
-                if matches!(plan.network, Network::ManagedRelay(_)) {
-                    print_preflight(relay::doctor(proxy, exit, api.as_ref())?, exit.country);
-                    return Ok(0);
-                }
-                let ip = proxy::check(proxy, exit)?;
-                println!("exit      {ip} ({})", exit.country);
-            }
-            Action::Run {
-                launch,
-                dry_run,
-                args,
-            } => {
+            Action::Doctor { launch, json } => return doctor(&dir, launch, json),
+            Action::Run { launch, args, .. } => {
                 let mut plan = Plan::prepare(&dir, launch)?;
                 plan.check_credentials()?;
                 plan.check_native_target()?;
-                if dry_run {
-                    plan.report();
-                    return Ok(0);
-                }
                 plan.prepare_client_config()?;
                 let exit = plan.exit_policy();
                 let api = plan.api_probe_url()?;
@@ -940,20 +1109,6 @@ fn dispatch(cli: Cli) -> Result<i32> {
         _ => {}
     }
     result
-}
-
-#[cfg(target_os = "macos")]
-fn print_preflight(checked: relay::Preflight, country: &str) {
-    println!("exit      {} ({country})", checked.exit_ip);
-    if let Some(interface) = checked.vpn_interface {
-        println!("vpn-used  {interface}");
-    }
-    if let Some(status) = checked.api_status {
-        println!(
-            "api-http  {} (unauthenticated HTTPS probe)",
-            status.as_u16()
-        );
-    }
 }
 
 fn main() {

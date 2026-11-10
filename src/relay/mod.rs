@@ -48,7 +48,7 @@ use tokio::{
 use crate::{
     notice::{self, Level},
     profile::ExitCheckInterval,
-    proxy::{self, ExitPolicy, Probe},
+    proxy::{self, DiagnosticPreflight, ExitPolicy, Probe},
 };
 use activity::{Activity, Cadence, Observed, SAMPLE_INTERVAL};
 use process::ChildGroup;
@@ -153,10 +153,27 @@ struct Session {
 }
 
 #[derive(Debug)]
-pub struct Preflight {
+struct Preflight {
     pub exit_ip: IpAddr,
+    #[cfg(test)]
     pub api_status: Option<reqwest::StatusCode>,
     pub vpn_interface: Option<String>,
+}
+
+impl TryFrom<DiagnosticPreflight> for Preflight {
+    type Error = Error;
+
+    fn try_from(report: DiagnosticPreflight) -> Result<Self> {
+        if let Some(error) = report.error {
+            return Err(error);
+        }
+        Ok(Self {
+            exit_ip: report.exit_ip.context("exit IP was not verified")?,
+            #[cfg(test)]
+            api_status: report.api_status,
+            vpn_interface: report.vpn_interface,
+        })
+    }
 }
 
 impl Session {
@@ -199,6 +216,17 @@ impl Session {
         })
     }
 
+    async fn diagnose(&mut self, api: Option<&Url>) -> DiagnosticPreflight {
+        let mut report = DiagnosticPreflight::default();
+        let result = tokio::select! {
+            failure = &mut self.server => Err(failure),
+            result = self.probe.diagnose(api, &mut report) => result,
+        };
+        report.error = result.err();
+        report
+    }
+
+    #[cfg(test)]
     async fn check(&mut self) -> Result<IpAddr> {
         tokio::select! {
             failure = &mut self.server => Err(failure),
@@ -207,24 +235,7 @@ impl Session {
     }
 
     async fn preflight(&mut self, api: Option<&Url>) -> Result<Preflight> {
-        let exit_ip = self.check().await?;
-        let api_status = if let Some(api) = api {
-            Some(tokio::select! {
-                failure = &mut self.server => return Err(failure),
-                result = self.probe.check_api(api) => result?,
-            })
-        } else {
-            None
-        };
-        tokio::select! {
-            failure = &mut self.server => return Err(failure),
-            result = self.probe.learn_ip(exit_ip) => result?,
-        }
-        Ok(Preflight {
-            exit_ip,
-            api_status,
-            vpn_interface: None,
-        })
+        self.diagnose(api).await.try_into()
     }
 
     async fn supervise(mut self, command: Command, health_interval: Duration) -> Result<i32> {
@@ -433,12 +444,16 @@ async fn handle(stream: TcpStream, state: Arc<State>) {
     }
 }
 
-pub fn doctor(upstream_url: &Url, exit: ExitPolicy<'_>, api: Option<&Url>) -> Result<Preflight> {
+pub(crate) fn doctor(
+    upstream_url: &Url,
+    exit: ExitPolicy<'_>,
+    api: Option<&Url>,
+) -> Result<DiagnosticPreflight> {
     proxy::run_network(async {
-        Session::start(upstream_url, exit, false)
+        Ok(Session::start(upstream_url, exit, false)
             .await?
-            .preflight(api)
-            .await
+            .diagnose(api)
+            .await)
     })
 }
 
@@ -461,40 +476,52 @@ async fn verified_vpn(
     exit: ExitPolicy<'_>,
     api: Option<&Url>,
     adaptive: bool,
-) -> Result<(Session, Preflight)> {
+) -> Result<(Option<Session>, DiagnosticPreflight)> {
     let mut failures = Vec::new();
-    let mut exit_rejection = None;
+    let mut best_failure = None;
+    let mut best_rank = 0;
     for name in vpn::candidates(interface)? {
-        let attempt = async {
-            let mut session = Session::start_vpn(&name, exit, adaptive).await?;
-            let preflight = session.preflight(api).await?;
-            Ok::<_, Error>((session, preflight))
-        }
-        .await;
-        match attempt {
-            Ok((session, mut preflight)) => {
-                preflight.vpn_interface = Some(name);
-                return Ok((session, preflight));
-            }
-            Err(error) => {
-                failures.push(format!("{name}: {error:#}"));
-                if error.is::<proxy::UnexpectedExitCountry>() || error.is::<proxy::ExitIpError>() {
-                    exit_rejection.get_or_insert(error);
+        let report = match Session::start_vpn(&name, exit, adaptive).await {
+            Ok(mut session) => {
+                let mut report = session.diagnose(api).await;
+                report.vpn_interface = Some(name.clone());
+                if report.error.is_none() {
+                    return Ok((Some(session), report));
                 }
+                report
             }
+            Err(error) => DiagnosticPreflight {
+                error: Some(error),
+                ..DiagnosticPreflight::default()
+            },
+        };
+        let error = report.error.as_ref().context("VPN check failure missing")?;
+        failures.push(format!("{name}: {error:#}"));
+        let rank = if error.is::<proxy::UnexpectedExitCountry>() || error.is::<proxy::ExitIpError>()
+        {
+            2
+        } else {
+            u8::from(report.exit_ip.is_some())
+        };
+        if best_failure.is_none() || rank > best_rank {
+            best_failure = Some(report);
+            best_rank = rank;
         }
     }
     let message = format!(
         "VPN preflight failed ({}). Select another tunnel or use the VPN app's HTTP(S) proxy",
         failures.join(" | ")
     );
-    Err(match exit_rejection {
-        Some(error) => error.context(message),
-        None => anyhow!(message),
-    })
+    let mut report = best_failure.context("no VPN interface was checked")?;
+    report.error = report.error.take().map(|error| error.context(message));
+    Ok((None, report))
 }
 
-pub fn doctor_vpn(interface: &str, exit: ExitPolicy<'_>, api: Option<&Url>) -> Result<Preflight> {
+pub(crate) fn doctor_vpn(
+    interface: &str,
+    exit: ExitPolicy<'_>,
+    api: Option<&Url>,
+) -> Result<DiagnosticPreflight> {
     proxy::run_network(async { Ok(verified_vpn(interface, exit, api, false).await?.1) })
 }
 
@@ -506,7 +533,9 @@ pub fn run_vpn(
     build_command: impl FnOnce(&Url) -> Result<Command>,
 ) -> Result<i32> {
     proxy::run_network(async {
-        let (session, preflight) = verified_vpn(interface, exit, api, interval.is_auto()).await?;
+        let (session, report) = verified_vpn(interface, exit, api, interval.is_auto()).await?;
+        let preflight = report.try_into()?;
+        let session = session.context("no VPN session was verified")?;
         launch(session, preflight, exit.country, interval, build_command).await
     })
 }
