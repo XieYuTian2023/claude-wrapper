@@ -41,6 +41,7 @@ def main():
             "libclaude-wrapper.dylib": ROOT / native / "libclaude-wrapper.dylib",
             "identity.cjs": ROOT / native / "identity.cjs",
             "socket-guard": ROOT / guard / "socket-guard",
+            "LICENSE": ROOT / "LICENSE",
             "LICENSE.fishhook": ROOT / "native/macos/LICENSE.fishhook",
             "Launch Claude.command": ROOT / "launcher/Launch Claude.command",
             "AUDIT.md": report,
@@ -88,7 +89,7 @@ Browser login, local listeners and Unix sockets may be restricted.
 No VM, administrator permission or system security changes are required.
 
 SHA256SUMS.json covers the shipped files except itself. The packager verifies
-archive paths and all content hashes. Preserve LICENSE.fishhook on redistribution.
+archive paths and all content hashes. Preserve LICENSE and LICENSE.fishhook on redistribution.
 """
         (destination / "README.txt").write_text(readme)
         names = sorted([*sources, "README.txt"])

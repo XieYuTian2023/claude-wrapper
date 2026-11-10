@@ -41,3 +41,5 @@ claude-wrapper run work-vpn
 ## 运行机制
 
 npm 负责安装。命令入口按 Mac 架构执行对应的 Rust 程序。本地中继负责网络转发和出口复查，macOS 辅助程序负责常规直连限制和受支持的身份查询。Claude Code 使用当前项目目录和宿主文件权限。原生查询覆盖随客户端版本而变化。包内提供 `runtime-sha256.json` 用于核对运行文件。
+
+本项目的原创代码采用 MIT 许可证，详见包内的 `LICENSE`。Fishhook 代码按 `LICENSE.fishhook` 分发。

@@ -38,6 +38,7 @@ def main():
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / "npm" / relative, destination)
         (stage / "bin/claude-wrapper").chmod(0o755)
+        shutil.copy2(ROOT / "LICENSE", stage / "LICENSE")
         shutil.copy2(ROOT / "native/macos/LICENSE.fishhook", stage / "LICENSE.fishhook")
         for arch, npm_arch, rust, native_subdir in (
             ("x86_64", "x64", ROOT / "target/release/claude-wrapper", ""),
@@ -72,7 +73,7 @@ def main():
                                 cwd=stage, env=env, capture_output=True, text=True, timeout=60, check=True)
         packed = json.loads(result.stdout)[0]
         archive = out / packed["filename"]
-        expected = {"package/package.json", "package/README.md", "package/LICENSE.fishhook",
+        expected = {"package/package.json", "package/README.md", "package/LICENSE", "package/LICENSE.fishhook",
                     "package/runtime-sha256.json", "package/bin/claude-wrapper"}
         expected.update(f"package/native/darwin-{arch}/{name}" for arch in ("x64", "arm64") for name in ASSETS)
         with tarfile.open(archive, "r:gz") as stream:

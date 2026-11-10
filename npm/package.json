@@ -3,7 +3,7 @@
   "version": "0.3.1",
   "description": "A native macOS profile and verified-egress launcher for Claude Code",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "os": ["darwin"],
   "cpu": ["x64", "arm64"],
   "bin": {
@@ -15,6 +15,7 @@
     "native/darwin-x64",
     "native/darwin-arm64",
     "runtime-sha256.json",
+    "LICENSE",
     "LICENSE.fishhook",
     "README.md"
   ]

@@ -113,16 +113,8 @@ cp native/macos/build/identity-launch native/macos/build/libclaude-wrapper.dylib
 
 npm 包由 `scripts/package_npm.py` 从已构建的两种架构生成。脚本校验 Mach-O 架构和归档文件，安装入口按本机架构执行对应的原生程序。[打包脚本](scripts/package_npm.py) · [npm 包说明](npm/README.md)
 
-### 验证
-
-```sh
-cargo test --locked
-make -C native/macos test
-make -C native/egress test
-```
-
-- **终端与网络。** 终端测试覆盖 Profile 操作、快捷键和终端状态恢复。网络测试用本地 TLS 夹具验证出口变更后关闭中继和回收客户端进程。[终端测试](tests/tui/README.md) · [中继测试](src/relay/testing.rs)
-- **官方客户端。** macOS 版 Claude Code 2.1.169 和 2.1.319 已通过本地模拟 API 验证请求、交互终端和文件工具。真实登录、OAuth 和钥匙串隔离仍待验证。2.1.319 会报告部分原始环境变量入口无法锁定。[测试方法](tests/real_claude/README.md) · [身份测试记录](reports/2026-11-08-identity-sandbox-audit.md) · [旧版日期字符复现](reports/2026-11-07-real-claude-audit.md)
-- **文件访问。** 项目文件通过原生接口访问。Intel Mac 的缓存文件微基准中，裸进程和完整策略的中位数分别为 13.169 和 13.597 微秒每次，约增加 3.25%。该结果只覆盖文件打开、读取状态、读取 64 字节和关闭。[测试脚本](native/egress/benchmark_file_io.py)
-
 原生查询覆盖与 Claude Code 的版本和签名策略有关。系统用户名、主机名、项目路径、文件内容和服务账号仍可能反映宿主身份。部分依赖本地监听、系统服务或 Unix 域套接字的工具会受到 Seatbelt 规则限制。[系统规则与已知边界](native/egress/README.md)
+
+## 许可证
+
+本项目的原创代码采用 MIT 许可证。随附的 Fishhook 代码保留其原有许可证。[MIT 许可证](LICENSE) · [Fishhook 许可证](native/macos/LICENSE.fishhook)

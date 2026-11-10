@@ -38,7 +38,7 @@ python3 native/egress/test_network_identity_files.py \
 
 探针先确认基线中来源可读，再检查实际生产助手；普通硬件型号、文件读写、inode 和所有者保留。输出不含实际身份值。初始十条 API 测试之外，账号/偏好回退、目录枚举、完整注册表与真实网络身份文件单独检查，不能将一项通过推断为全量身份隔离。
 
-规则拒绝 UDP、直接连接其他端口或外部主机、网络监听及 Unix 域套接字连接。它还限制 AppleEvents 和已知的 DNS-SD、后台 URLSession 及 LaunchServices 打开 URL 的 Mach 服务。客户端应使用数值回环地址访问现有 HTTP(S) 代理，由代理解析目的域名。测试覆盖本地 TCP 双栈、单栈及 IPv4 映射地址、接口枚举限制、直接 UDP、`mDNSResponder` 套接字、子进程继承限制及真实文件读写。策略保留宿主路径和现有文件权限。[文件 I/O 微基准](../../README.md#验证)
+规则拒绝 UDP、直接连接其他端口或外部主机、网络监听及 Unix 域套接字连接。它还限制 AppleEvents 和已知的 DNS-SD、后台 URLSession 及 LaunchServices 打开 URL 的 Mach 服务。客户端应使用数值回环地址访问现有 HTTP(S) 代理，由代理解析目的域名。测试覆盖本地 TCP 双栈、单栈及 IPv4 映射地址、接口枚举限制、直接 UDP、`mDNSResponder` 套接字、子进程继承限制及真实文件读写。策略保留宿主路径和现有文件权限。[文件 I/O 微基准脚本](benchmark_file_io.py)
 
 其他 Mach 或系统服务可能提供委托联网能力。现有浏览器、同用户进程、通过文件或管道协作的外部程序以及代理自身的路由都不在该策略的作用域。守护进程启停和同一端口上监听者变动也不会触发重新校验。请把这项能力视为常规子进程的直接套接字限制。
 
