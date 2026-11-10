@@ -8,6 +8,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include "identity_files.h"
+#include "../diagnostics.h"
 
 static int check_inherited_descriptors(void) {
     for (int fd = STDIN_FILENO; fd <= STDERR_FILENO; fd++) {
@@ -115,11 +116,11 @@ int main(int argc, char **argv) {
     }
     unsigned long port = strtoul(argv[port_index], NULL, 10);
     if (port == 0 || port > 65535) {
-        fputs("socket-guard: expected a port from 1 to 65535\n", stderr);
+        cw_error("expected a port from 1 to 65535");
         return 125;
     }
     if (check_inherited_descriptors() == -1) {
-        perror("socket-guard: unsafe inherited descriptors");
+        cw_error("unsafe inherited descriptors: %s", strerror(errno));
         return 125;
     }
 
@@ -132,25 +133,24 @@ int main(int argc, char **argv) {
         " \"com.apple.nsurlsessiond\" \"com.apple.lsd.open\" \"com.apple.lsd.openurl\"))"
         "(deny appleevent-send)%s%s%s", protocol, port, interface_rules, identity_rules, account_rules);
     if (length < 0 || (size_t)length >= sizeof profile) {
-        fputs("socket-guard: could not construct network policy\n", stderr);
+        cw_error("could not construct network policy");
         return 125;
     }
     struct cw_rules rules = { .bytes = profile, .used = (size_t)length, .capacity = sizeof(profile) };
     if (identity_files && !cw_identity_file_rules(&rules)) {
-        perror("socket-guard: could not prepare system identity sources");
+        cw_error("could not prepare system identity sources: %s", strerror(errno));
         return 125;
     }
 
     char *error = NULL;
     // Literal profiles use flags=0, as in Apple's sandbox-exec.
     if (sandbox_init(profile, 0, &error) != 0) {
-        fprintf(stderr, "socket-guard: could not apply network policy: %s\n",
-                error == NULL ? "unknown error" : error);
+        cw_error("could not apply network policy: %s", error == NULL ? "unknown error" : error);
         if (error != NULL) sandbox_free_error(error);
         return 125;
     }
     char **target = argv + port_index + 1;
     execv(*target, target);
-    perror("socket-guard: execv");
+    cw_error("could not start the guarded client: %s", strerror(errno));
     return 126;
 }

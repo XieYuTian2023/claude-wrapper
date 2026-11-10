@@ -24,7 +24,7 @@ claude-wrapper ui
 
 如果以前安装过 `claude-wrapper-local`，请先运行 `npm uninstall -g claude-wrapper-local`，再安装 npm 版。新版会沿用 `~/Library/Application Support/claude-wrapper/profiles` 中的配置和客户端数据。
 
-也可以下载安装包，在其所在目录执行 `npm install -g ./claude-wrapper-local-0.3.2.tgz`。[GitHub Release 安装包](https://github.com/XieYuTian2023/claude-wrapper/releases/tag/v0.3.2)
+GitHub Releases 提供 `0.3.2` 的离线安装包。在下载目录运行 `npm install -g ./claude-wrapper-local-0.3.2.tgz` 即可安装该版本。[GitHub Release 安装包](https://github.com/XieYuTian2023/claude-wrapper/releases/tag/v0.3.2)
 
 ## ⚙️ 配置与启动
 
@@ -36,7 +36,7 @@ claude-wrapper ui
 | HTTP(S) 代理 | 在「代理地址」填写代理服务提供的地址，例如 `http://127.0.0.1:8080` |
 | 环境变量代理 | 填写保存代理 URL 的环境变量名，适用于需要认证的代理 |
 
-在「预期出口地区」按 `Enter`，按名称或两位地区代码搜索。按 `Ctrl+S` 保存，再按 `H` 检查公网 IP、地区和 Claude API 的 HTTPS 连通性。API 返回 `401` 或 `405` 表示无凭据探测收到了 HTTP 响应，账号状态由客户端登录流程确认。
+在「预期出口地区」按 `Enter`，按名称或两位地区代码搜索。按 `Ctrl+S` 保存，再按 `H` 检查公网 IP、地区和 Claude API 的 HTTPS 连通性。
 
 在首页按 `Enter` 启动选中的 Profile，或按 `S` 将它设为默认。侧栏用 ★ 标记默认配置。在项目目录中运行 `cw` 可直接启动默认 Profile。只有一份配置时会自动使用它。`cw` 后的参数传给 Claude Code，例如 `cw --version`。
 
@@ -74,6 +74,8 @@ claude-wrapper run work-vpn -- --version
 ```
 
 `doctor` 单独执行网络预检。`run` 启动指定 Profile，`--` 后跟客户端参数。使用 `claude-wrapper run work-vpn --dry-run` 查看启动计划，使用 `claude-wrapper profile --help` 查看配置管理命令。
+
+启动提示以 `[Wrapper/出口]`、`[Wrapper/错误]` 等标签标识。`doctor` 会显示无凭据 HTTPS 探测的状态码，账号状态以客户端登录结果为准。需要兼容性诊断时可运行 `CLAUDE_WRAPPER_DIAGNOSTICS=1 cw`。设置 `NO_COLOR=1` 可关闭标签颜色。
 
 ### Profile 文件
 

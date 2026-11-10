@@ -91,7 +91,7 @@ def main():
                  "sha256": sha(archive), "bytes": archive.stat().st_size, "npmIntegrity": packed["integrity"],
                  "fileCount": len(expected), "archivePathsAndHashesVerified": True, "runtime": runtime,
                  "installScripts": False, "npmDependencies": [], "published": False,
-                 "source": {path: sha(ROOT / path) for path in ("Cargo.toml", "Cargo.lock", "src/main.rs", "src/profile.rs", "src/exit_pin.rs", "src/exit_regions.rs", "src/iso3166.tab", "src/journal.rs", "src/tui.rs", "src/proxy.rs", "src/relay/mod.rs", "src/relay/activity.rs", "src/relay/vpn.rs", "src/relay/vpn_dns.rs", "native/macos/identity.m", "native/macos/rebind.c", "native/bun/identity.cjs", "native/egress/socket_guard.c", "native/egress/identity_files.h", "npm/bin/claude-wrapper", "npm/package.json")}}
+                 "source": {path: sha(ROOT / path) for path in ("Cargo.toml", "Cargo.lock", "src/main.rs", "src/profile.rs", "src/exit_pin.rs", "src/exit_regions.rs", "src/iso3166.tab", "src/journal.rs", "src/notice.rs", "src/tui.rs", "src/proxy.rs", "src/relay/mod.rs", "src/relay/activity.rs", "src/relay/vpn.rs", "src/relay/vpn_dns.rs", "native/diagnostics.h", "native/macos/launch.c", "native/macos/identity.m", "native/macos/rebind.c", "native/bun/identity.cjs", "native/egress/socket_guard.c", "native/egress/identity_files.h", "npm/bin/claude-wrapper", "npm/package.json")}}
         (out / "manifest.json").write_text(json.dumps(proof, indent=2) + "\n")
         print(json.dumps({key: proof[key] for key in ("archive", "sha256", "bytes", "fileCount", "published")}))
 

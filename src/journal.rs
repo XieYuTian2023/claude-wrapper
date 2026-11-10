@@ -12,7 +12,10 @@ use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 
-use crate::proxy::{ExitIpError, UnexpectedExitCountry};
+use crate::{
+    notice::{self, Level},
+    proxy::{ExitIpError, UnexpectedExitCountry},
+};
 
 const LIMIT: usize = 100;
 const MAX_BYTES: u64 = 64 * 1024;
@@ -156,7 +159,7 @@ fn append(dir: &Path, profile: Option<&str>, operation: &str, event: Event) -> R
 
 pub fn record(dir: &Path, profile: Option<&str>, operation: &str, event: Event) {
     if append(dir, profile, operation, event).is_err() {
-        eprintln!("claude-wrapper: could not write local event log");
+        notice::emit(Level::Warning, format_args!("无法写入本地日志"));
     }
 }
 

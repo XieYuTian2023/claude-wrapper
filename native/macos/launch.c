@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "../diagnostics.h"
 
 #define READY_FD "CLAUDE_WRAPPER_READY_FD"
 #define SHIM_NAME "libclaude-wrapper.dylib"
@@ -296,24 +297,23 @@ int main(int argc, char **argv)
     if (!realpath(argv[target_index], target) || stat(target, &status) != 0 ||
         !S_ISREG(status.st_mode) || access(target, X_OK) != 0 ||
         !has_macho_magic(target)) {
-        fputs("identity-launch: target must be an executable Mach-O binary\n", stderr);
+        cw_error("target must be an executable Mach-O binary");
         return 126;
     }
     if ((status.st_mode & (S_ISUID | S_ISGID)) || (status.st_flags & SF_RESTRICTED) ||
         (!bun && !signature_allows_injection(target))) {
-        fputs("identity-launch: target signing or system policy prevents native injection\n",
-              stderr);
+        cw_error("target signing or system policy prevents native injection");
         return 126;
     }
     char shim[PATH_MAX];
     const char *asset = bun ? "identity.cjs" : SHIM_NAME;
     if (!asset_path(shim, sizeof(shim), asset, bun)) {
-        fprintf(stderr, "identity-launch: cannot locate adjacent %s\n", asset);
+        cw_error("cannot locate adjacent %s", asset);
         return 126;
     }
     char native_library[PATH_MAX] = "";
     if (bun && !asset_path(native_library, sizeof(native_library), SHIM_NAME, true)) {
-        fprintf(stderr, "identity-launch: cannot locate adjacent %s\n", SHIM_NAME);
+        cw_error("cannot locate adjacent %s", SHIM_NAME);
         return 126;
     }
     if (check_only) {
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 
     int ready[2];
     if (prepare_pipe(ready) != 0) {
-        perror("identity-launch: create readiness pipe");
+        cw_error("could not create readiness pipe: %s", strerror(errno));
         return 126;
     }
     char write_fd[16];
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
     snprintf(write_fd, sizeof(write_fd), "%d", ready[1]);
     if (setenv(READY_FD, write_fd, 1) != 0 ||
         (bun ? !configure_bun(shim, native_library, &preload_fd) : setenv("DYLD_INSERT_LIBRARIES", shim, 1) != 0)) {
-        perror("identity-launch: configure injection");
+        cw_error("could not configure the launch helper: %s", strerror(errno));
         return 126;
     }
 
@@ -341,13 +341,13 @@ int main(int argc, char **argv)
     }
     close(ready[1]);
     if (spawn_status != 0) {
-        fprintf(stderr, "identity-launch: could not launch target: %s\n", strerror(spawn_status));
+        cw_error("could not launch target: %s", strerror(spawn_status));
         return 126;
     }
     bool loaded = wait_for_shim(ready[0]);
     close(ready[0]);
     if (!loaded) {
-        fputs("identity-launch: target did not confirm identity initialization\n", stderr);
+        cw_error("target did not confirm identity initialization");
         kill(child, SIGKILL);
     }
     // Keep the exited child unreaped until signals can no longer be forwarded to its PID.
@@ -358,7 +358,7 @@ int main(int argc, char **argv)
     } while (wait_status == -1 && errno == EINTR);
     child_pid = 0;
     if (wait_status == -1) {
-        perror("identity-launch: wait for target");
+        cw_error("could not wait for target: %s", strerror(errno));
         return 126;
     }
     while (waitpid(child, NULL, 0) == -1 && errno == EINTR) {

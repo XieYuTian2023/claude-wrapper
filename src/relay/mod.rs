@@ -46,6 +46,7 @@ use tokio::{
 };
 
 use crate::{
+    notice::{self, Level},
     profile::ExitCheckInterval,
     proxy::{self, ExitPolicy, Probe},
 };
@@ -155,6 +156,7 @@ struct Session {
 pub struct Preflight {
     pub exit_ip: IpAddr,
     pub api_status: Option<reqwest::StatusCode>,
+    pub vpn_interface: Option<String>,
 }
 
 impl Session {
@@ -221,6 +223,7 @@ impl Session {
         Ok(Preflight {
             exit_ip,
             api_status,
+            vpn_interface: None,
         })
     }
 
@@ -385,7 +388,7 @@ async fn handle(stream: TcpStream, state: Arc<State>) {
                 let tunnel = match state.backend.connect(authority).await {
                     Ok(tunnel) => tunnel,
                     Err(error) => {
-                        eprintln!("claude-wrapper: relay tunnel failed: {error:#}");
+                        notice::emit(Level::Error, format_args!("relay tunnel failed: {error:#}"));
                         return reply(StatusCode::BAD_GATEWAY);
                     }
                 };
@@ -469,9 +472,9 @@ async fn verified_vpn(
         }
         .await;
         match attempt {
-            Ok(result) => {
-                eprintln!("claude-wrapper: verified VPN interface {name}");
-                return Ok(result);
+            Ok((session, mut preflight)) => {
+                preflight.vpn_interface = Some(name);
+                return Ok((session, preflight));
             }
             Err(error) => {
                 failures.push(format!("{name}: {error:#}"));
@@ -515,17 +518,18 @@ async fn launch(
     interval: ExitCheckInterval,
     build_command: impl FnOnce(&Url) -> Result<Command>,
 ) -> Result<i32> {
-    eprintln!(
-        "claude-wrapper: exit probe passed ({}, {country})",
-        preflight.exit_ip
-    );
-    if let Some(status) = preflight.api_status {
-        eprintln!(
-            "claude-wrapper: unauthenticated Claude API probe returned HTTP {}",
-            status.as_u16()
-        );
-    }
     let command = build_command(&session.url)?;
+    let interface = preflight
+        .vpn_interface
+        .map(|name| format!(" · VPN {name}"))
+        .unwrap_or_default();
+    notice::emit(
+        Level::Exit,
+        format_args!(
+            "出口检查通过 · {} ({country}){interface}",
+            preflight.exit_ip
+        ),
+    );
     session
         .supervise(command, Duration::from_secs(interval.idle_seconds()))
         .await

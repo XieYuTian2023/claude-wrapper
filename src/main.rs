@@ -2,6 +2,7 @@ mod client;
 mod exit_pin;
 mod exit_regions;
 mod journal;
+mod notice;
 mod profile;
 mod proxy;
 #[cfg(target_os = "macos")]
@@ -312,9 +313,12 @@ impl Plan {
             );
         }
         if active.len() > 1 {
-            eprintln!(
-                "claude-wrapper: multiple Claude authentication variables are set ({}); verify which credential the client selects",
-                active.join(", ")
+            notice::emit(
+                notice::Level::Warning,
+                format_args!(
+                    "检测到多项 Claude 鉴权设置（{}），请确认客户端使用的凭据",
+                    active.join(", ")
+                ),
             );
         }
         Ok(())
@@ -505,11 +509,11 @@ impl Plan {
         }
         match &self.network {
             Network::ManagedRelay(guard) => println!(
-                "network   per-launch CONNECT relay with runtime US checks ({})",
+                "network   per-launch CONNECT relay with configured exit checks ({})",
                 guard.display()
             ),
             Network::ManagedVpn(guard) => println!(
-                "network   VPN-bound CONNECT relay with runtime US checks ({})",
+                "network   VPN-bound CONNECT relay with configured exit checks ({})",
                 guard.display()
             ),
             Network::SocketGuard(guard) => println!(
@@ -660,6 +664,11 @@ impl Plan {
             if self.identity_helper.is_some() {
                 command.env("CLAUDE_WRAPPER_GROUP_SUPERVISED", "1");
             }
+        }
+        if self.bun_identity
+            && env::var_os("CLAUDE_WRAPPER_DIAGNOSTICS").is_some_and(|value| value == "1")
+        {
+            command.env("CLAUDE_WRAPPER_DIAGNOSTICS", "1");
         }
         let url = effective_proxy.as_str();
         command
@@ -894,13 +903,14 @@ fn dispatch(cli: Cli) -> Result<i32> {
                     });
                 }
                 let ip = proxy::check(proxy, exit)?;
-                eprintln!(
-                    "claude-wrapper: proxy probe passed ({ip}, {})",
-                    exit.country
+                notice::emit(
+                    notice::Level::Exit,
+                    format_args!("出口检查通过 · {ip} ({})", exit.country),
                 );
                 if matches!(plan.network, Network::ProxyEnv) {
-                    eprintln!(
-                        "claude-wrapper: proxy environment selected; direct connections are possible"
+                    notice::emit(
+                        notice::Level::Warning,
+                        format_args!("环境变量代理模式允许忽略代理的程序直连"),
                     );
                 }
                 let command = plan.command(args, proxy)?;
@@ -933,8 +943,14 @@ fn dispatch(cli: Cli) -> Result<i32> {
 #[cfg(target_os = "macos")]
 fn print_preflight(checked: relay::Preflight, country: &str) {
     println!("exit      {} ({country})", checked.exit_ip);
+    if let Some(interface) = checked.vpn_interface {
+        println!("vpn-used  {interface}");
+    }
     if let Some(status) = checked.api_status {
-        println!("api-http  {} (unauthenticated)", status.as_u16());
+        println!(
+            "api-http  {} (unauthenticated HTTPS probe)",
+            status.as_u16()
+        );
     }
 }
 
@@ -942,7 +958,13 @@ fn main() {
     match dispatch(Cli::parse()) {
         Ok(code) => process::exit(code),
         Err(error) => {
-            eprintln!("claude-wrapper: {error:#}");
+            let level =
+                if error.is::<proxy::UnexpectedExitCountry>() || error.is::<proxy::ExitIpError>() {
+                    notice::Level::Blocked
+                } else {
+                    notice::Level::Error
+                };
+            notice::emit(level, format_args!("{error:#}"));
             process::exit(1);
         }
     }

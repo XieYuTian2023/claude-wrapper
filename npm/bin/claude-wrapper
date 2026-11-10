@@ -3,7 +3,11 @@
 set -eu
 
 cw_fail() {
-    printf '%s\n' "claude-wrapper: $1" >&2
+    if [ -t 2 ] && [ "${NO_COLOR+x}" != x ] && [ "${TERM-}" != dumb ]; then
+        printf '\033[1;31m[Wrapper/错误]\033[0m: %s\n' "$1" >&2
+    else
+        printf '[Wrapper/错误]: %s\n' "$1" >&2
+    fi
     exit 1
 }
 

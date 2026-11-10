@@ -198,6 +198,13 @@ fn failed_connect_probe_prevents_target_start_even_with_inherited_no_proxy() {
     assert!(!output.status.success());
     assert!(stdout.is_empty(), "unexpected target output {stdout}");
     assert!(stderr.contains("proxy probe failed"), "{stderr}");
+    assert!(
+        stderr
+            .lines()
+            .any(|line| line.starts_with("[Wrapper/错误]: ")),
+        "{stderr}"
+    );
+    assert!(!stderr.contains('\x1b'), "{stderr}");
 }
 
 #[cfg(target_os = "macos")]

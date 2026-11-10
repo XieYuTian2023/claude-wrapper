@@ -688,13 +688,8 @@ impl HealthJob {
                     || "出口检查通过".into(),
                     |result| format!("出口 {}", result.trim()),
                 );
-            if let Some(status) = output
-                .lines()
-                .filter_map(|line| line.strip_prefix("api-http"))
-                .filter_map(|line| line.split_whitespace().next())
-                .find_map(|word| word.parse::<u16>().ok())
-            {
-                message.push_str(&format!(" · API HTTP {status}"));
+            if output.lines().any(|line| line.starts_with("api-http ")) {
+                message.push_str(" · Claude API 可连接");
             }
             Ok(Some((true, message)))
         } else {

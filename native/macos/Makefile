@@ -12,11 +12,11 @@ all: $(BUILD)/identity-launch $(BUILD)/libclaude-wrapper.dylib $(BUILD)/identity
 $(BUILD):
 	mkdir -p "$@"
 
-$(BUILD)/libclaude-wrapper.dylib: identity.m rebind.c rebind.h LICENSE.fishhook | $(BUILD)
+$(BUILD)/libclaude-wrapper.dylib: identity.m rebind.c rebind.h ../diagnostics.h LICENSE.fishhook | $(BUILD)
 	$(CC) $(CFLAGS) $(PLATFORM_FLAGS) -fobjc-arc -dynamiclib \
 		-framework Foundation -o "$@" identity.m rebind.c
 
-$(BUILD)/identity-launch: launch.c | $(BUILD)
+$(BUILD)/identity-launch: launch.c ../diagnostics.h | $(BUILD)
 	$(CC) $(CFLAGS) $(PLATFORM_FLAGS) \
 		-framework CoreFoundation -framework Security -o "$@" "$<"
 
@@ -47,7 +47,7 @@ test-late: all $(BUILD)/late-fixture $(BUILD)/late-consumer.dylib
 test-late-official: all $(BUILD)/late-consumer.dylib
 	python3 test/check-late-official.py
 
-$(BUILD)/libclaude-wrapper-test.dylib: identity.m rebind.c rebind.h | $(BUILD)
+$(BUILD)/libclaude-wrapper-test.dylib: identity.m rebind.c rebind.h ../diagnostics.h | $(BUILD)
 	$(CC) $(CFLAGS) $(PLATFORM_FLAGS) -DCW_REBIND_TESTING -fobjc-arc -dynamiclib \
 		-framework Foundation -o "$@" identity.m rebind.c
 

@@ -3,8 +3,14 @@
 // Bun's documented preload entry customizes this process without wrapping file APIs.
 const fs = require("node:fs");
 
-function fail() {
-  process.stderr.write("identity-launch: Bun identity initialization failed\n");
+function notice(type, color, message) {
+  const label = `[Wrapper/${type}]`;
+  const useColor = process.stderr.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
+  process.stderr.write(`${useColor ? `\x1b[1;${color}m${label}\x1b[0m` : label}: ${message}\n`);
+}
+
+function fail(message = "客户端兼容设置初始化失败") {
+  notice("错误", 31, message);
   process.exit(126);
 }
 
@@ -46,8 +52,7 @@ try {
   });
   const activation = native.symbols.claude_wrapper_activate();
   if (activation !== 0 || native.symbols.claude_wrapper_self_test() !== 224) {
-    process.stderr.write(`identity-launch: native identity activation failed (${activation})\n`);
-    fail();
+    fail(`客户端兼容设置初始化失败（${activation}）`);
   }
   const status = Buffer.alloc(160);
   if (native.symbols.claude_wrapper_get_status(status, 160n) !== 0) fail();
@@ -145,12 +150,12 @@ try {
         enumerable: descriptor?.enumerable ?? false,
       });
     }
-  } else {
-    process.stderr.write("identity-launch: original environment aliases cannot be locked by this runtime; coverage is partial\n");
+  } else if (process.env.CLAUDE_WRAPPER_DIAGNOSTICS === "1") {
+    notice("兼容性", 33, "当前 Claude 运行时不支持锁定部分原始环境变量入口");
   }
   function checkChange(key, value) {
     if (protectedValues.has(key) && value !== protectedValues.get(key)) {
-      process.stderr.write(`identity-launch: settings attempted to change Profile variable ${key}\n`);
+      notice("拦截", 31, `客户端设置尝试修改受 Profile 管理的变量 ${key}`);
       process.exit(126);
     }
   }
@@ -187,7 +192,7 @@ try {
     "CLAUDE_WRAPPER_PROXY_URL", "CLAUDE_WRAPPER_ORIGINAL_BUN_OPTIONS",
     "CLAUDE_WRAPPER_DEVICE_ID",
     "CLAUDE_WRAPPER_PRELOAD_FD",
-    "CLAUDE_WRAPPER_NATIVE_LIBRARY", "CLAUDE_WRAPPER_INIT_OWNER",
+    "CLAUDE_WRAPPER_NATIVE_LIBRARY", "CLAUDE_WRAPPER_INIT_OWNER", "CLAUDE_WRAPPER_DIAGNOSTICS",
   ]) {
     delete process.env[key];
   }

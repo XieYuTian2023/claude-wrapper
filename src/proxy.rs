@@ -275,10 +275,6 @@ impl Probe {
         let pinned = exit_pin::establish(path, first)?;
         verify_ip(first, pinned)?;
         self.expected_ip = Some(pinned);
-        eprintln!(
-            "claude-wrapper: automatic exit pinned to {pinned} after {} matching probes",
-            exit_pin::SAMPLES
-        );
         Ok(())
     }
 

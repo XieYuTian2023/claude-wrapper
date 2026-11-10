@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "rebind.h"
+#include "../diagnostics.h"
 
 #define INTERPOSE(replacement, original)                                      \
     __attribute__((used, section("__DATA,__interpose")))                        \
@@ -224,6 +225,7 @@ int claude_wrapper_clear_bootstrap(void)
         "CLAUDE_WRAPPER_PROXY_URL", "CLAUDE_WRAPPER_DEVICE_ID",
         "CLAUDE_WRAPPER_READY_FD", "CLAUDE_WRAPPER_PRELOAD_FD",
         "CLAUDE_WRAPPER_ORIGINAL_BUN_OPTIONS",
+        "CLAUDE_WRAPPER_DIAGNOSTICS",
     };
     for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
         if (unsetenv(keys[i]) != 0) { error = errno; goto done; }
@@ -321,8 +323,9 @@ static void initialize_shim(void)
     }
     if (!bun_initialization_owner && getenv(READY_FD) &&
         (!timezone || !locale || !atomic_load(&configured_languages))) {
-        static const char message[] = "identity-launch: invalid native profile\n";
-        write(STDERR_FILENO, message, sizeof(message) - 1);
+        const char *message = cw_use_color() ? CW_ERROR_COLOR CW_ERROR_LABEL CW_RESET_COLOR
+            ": invalid native profile\n" : CW_ERROR_LABEL ": invalid native profile\n";
+        write(STDERR_FILENO, message, strlen(message));
         _exit(126);
     }
     announce_loaded();
